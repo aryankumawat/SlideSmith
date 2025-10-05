@@ -9,13 +9,15 @@ import {
   Line,
   BarChart,
   Bar,
-  AreaChart,
-  Area,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from 'recharts';
 
 interface ChartBlockProps {
@@ -42,26 +44,30 @@ export function ChartBlock({
   }
 
   const renderChart = () => {
-    const { data, x, y, kind } = block;
+    const { data, chartType, title } = block;
 
     const chartProps = {
-      data,
+      data: data.labels.map((label, index) => ({
+        name: label,
+        value: data.datasets[0]?.data[index] || 0,
+        fill: data.datasets[0]?.backgroundColor?.[index] || themeConfig.colors.primary,
+      })),
       margin: { top: 20, right: 30, left: 20, bottom: 5 },
     };
 
     const commonProps = {
-      dataKey: y,
+      dataKey: 'value',
       stroke: themeConfig.colors.primary,
       fill: themeConfig.colors.primary,
       strokeWidth: 2,
     };
 
-    switch (kind) {
+    switch (chartType) {
       case 'line':
         return (
           <LineChart {...chartProps}>
             <CartesianGrid strokeDasharray="3 3" stroke={themeConfig.colors.border} />
-            <XAxis dataKey={x} stroke={themeConfig.colors.textSecondary} />
+            <XAxis dataKey="name" stroke={themeConfig.colors.textSecondary} />
             <YAxis stroke={themeConfig.colors.textSecondary} />
             <Tooltip
               contentStyle={{
@@ -78,7 +84,7 @@ export function ChartBlock({
         return (
           <BarChart {...chartProps}>
             <CartesianGrid strokeDasharray="3 3" stroke={themeConfig.colors.border} />
-            <XAxis dataKey={x} stroke={themeConfig.colors.textSecondary} />
+            <XAxis dataKey="name" stroke={themeConfig.colors.textSecondary} />
             <YAxis stroke={themeConfig.colors.textSecondary} />
             <Tooltip
               contentStyle={{
@@ -91,12 +97,23 @@ export function ChartBlock({
             <Bar {...commonProps} />
           </BarChart>
         );
-      case 'area':
+      case 'pie':
+      case 'doughnut':
         return (
-          <AreaChart {...chartProps}>
-            <CartesianGrid strokeDasharray="3 3" stroke={themeConfig.colors.border} />
-            <XAxis dataKey={x} stroke={themeConfig.colors.textSecondary} />
-            <YAxis stroke={themeConfig.colors.textSecondary} />
+          <PieChart>
+            <Pie
+              data={chartProps.data}
+              cx="50%"
+              cy="50%"
+              innerRadius={chartType === 'doughnut' ? 60 : 0}
+              outerRadius={120}
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {chartProps.data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Pie>
             <Tooltip
               contentStyle={{
                 backgroundColor: themeConfig.colors.surface,
@@ -105,14 +122,14 @@ export function ChartBlock({
                 color: themeConfig.colors.text,
               }}
             />
-            <Area {...commonProps} />
-          </AreaChart>
+            <Legend />
+          </PieChart>
         );
       default:
         return (
           <div className="flex items-center justify-center h-64 text-lg">
             <span style={{ color: themeConfig.colors.textSecondary }}>
-              Unsupported chart type: {kind}
+              Unsupported chart type: {chartType}
             </span>
           </div>
         );
@@ -128,13 +145,23 @@ export function ChartBlock({
       onDelete={onDelete}
       onAdd={onAdd}
       className="w-full"
+      animation={block.animation}
     >
-      <div className="w-full h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          {renderChart()}
-        </ResponsiveContainer>
+      <div className="w-full">
+        {block.title && (
+          <h3 
+            className="text-lg font-semibold mb-4 text-center"
+            style={{ color: themeConfig.colors.text }}
+          >
+            {block.title}
+          </h3>
+        )}
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            {renderChart()}
+          </ResponsiveContainer>
+        </div>
       </div>
     </BaseBlock>
   );
 }
-

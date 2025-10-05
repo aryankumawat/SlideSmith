@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { SlideBlock, Theme } from '@/lib/schema';
+import React, { useEffect, useRef, useState } from 'react';
+import { SlideBlock, Theme, AnimationType } from '@/lib/schema';
 import { getThemeConfig } from '@/lib/theming';
 import { Button } from '@/components/ui/button';
 import { Trash2, Plus, Edit3 } from 'lucide-react';
@@ -15,6 +15,8 @@ interface BaseBlockProps {
   onAdd?: (block: SlideBlock) => void;
   children: React.ReactNode;
   className?: string;
+  animation?: AnimationType;
+  delay?: number;
 }
 
 export function BaseBlock({
@@ -26,15 +28,84 @@ export function BaseBlock({
   onAdd,
   children,
   className = '',
+  animation = 'fadeIn',
+  delay = 0,
 }: BaseBlockProps) {
   const themeConfig = getThemeConfig(theme);
+  const [isVisible, setIsVisible] = useState(false);
+  const elementRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [delay]);
+
+  const getAnimationClasses = () => {
+    if (!isVisible) {
+      switch (animation) {
+        case 'fadeIn':
+          return 'opacity-0';
+        case 'slideInFromTop':
+          return 'opacity-0 transform -translate-y-8';
+        case 'slideInFromBottom':
+          return 'opacity-0 transform translate-y-8';
+        case 'slideInFromLeft':
+          return 'opacity-0 transform -translate-x-8';
+        case 'slideInFromRight':
+          return 'opacity-0 transform translate-x-8';
+        case 'scaleIn':
+          return 'opacity-0 transform scale-95';
+        case 'bounceIn':
+          return 'opacity-0 transform scale-75';
+        case 'pulse':
+          return 'opacity-0';
+        default:
+          return 'opacity-0';
+      }
+    }
+
+    const baseClasses = 'transition-all duration-700 ease-out';
+    switch (animation) {
+      case 'fadeIn':
+        return `${baseClasses} opacity-100`;
+      case 'slideInFromTop':
+        return `${baseClasses} opacity-100 transform translate-y-0`;
+      case 'slideInFromBottom':
+        return `${baseClasses} opacity-100 transform translate-y-0`;
+      case 'slideInFromLeft':
+        return `${baseClasses} opacity-100 transform translate-x-0`;
+      case 'slideInFromRight':
+        return `${baseClasses} opacity-100 transform translate-x-0`;
+      case 'scaleIn':
+        return `${baseClasses} opacity-100 transform scale-100`;
+      case 'bounceIn':
+        return `${baseClasses} opacity-100 transform scale-100 animate-bounce`;
+      case 'pulse':
+        return `${baseClasses} opacity-100 animate-pulse`;
+      default:
+        return `${baseClasses} opacity-100`;
+    }
+  };
 
   if (!isEditing) {
-    return <div className={className}>{children}</div>;
+    return (
+      <div 
+        ref={elementRef}
+        className={`${getAnimationClasses()} ${className}`}
+      >
+        {children}
+      </div>
+    );
   }
 
   return (
-    <div className={`relative group ${className}`}>
+    <div 
+      ref={elementRef}
+      className={`relative group ${getAnimationClasses()} ${className}`}
+    >
       {children}
       
       {/* Edit controls */}
@@ -76,3 +147,30 @@ export function BaseBlock({
   );
 }
 
+// Staggered animation component for bullet points
+export function StaggeredBlock({
+  children,
+  className = '',
+  staggerDelay = 100,
+}: {
+  children: React.ReactNode[];
+  className?: string;
+  staggerDelay?: number;
+}) {
+  return (
+    <div className={className}>
+      {children.map((child, index) => (
+        <div
+          key={index}
+          className="opacity-0 transform translate-y-4 transition-all duration-500 ease-out"
+          style={{
+            animationDelay: `${index * staggerDelay}ms`,
+            animation: 'staggerIn 0.5s ease-out forwards',
+          }}
+        >
+          {child}
+        </div>
+      ))}
+    </div>
+  );
+}

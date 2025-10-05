@@ -3,7 +3,7 @@
 import React from 'react';
 import { SlideBlock, Theme } from '@/lib/schema';
 import { getThemeConfig } from '@/lib/theming';
-import { BaseBlock } from './BaseBlock';
+import { BaseBlock, StaggeredBlock } from './BaseBlock';
 
 interface BulletsBlockProps {
   block: SlideBlock;
@@ -28,6 +28,20 @@ export function BulletsBlock({
     return null;
   }
 
+  const bulletItems = block.items.map((item, index) => (
+    <li
+      key={index}
+      className="flex items-start space-x-3"
+      style={{ color: themeConfig.colors.text }}
+    >
+      <span
+        className="flex-shrink-0 w-2 h-2 rounded-full mt-3"
+        style={{ backgroundColor: themeConfig.colors.primary }}
+      />
+      <span className="leading-relaxed">{item}</span>
+    </li>
+  ));
+
   return (
     <BaseBlock
       block={block}
@@ -37,29 +51,23 @@ export function BulletsBlock({
       onDelete={onDelete}
       onAdd={onAdd}
       className="w-full"
+      animation={block.animation}
     >
-      <ul
-        className="space-y-3 text-lg md:text-xl"
-        style={{
-          color: themeConfig.colors.text,
-          fontFamily: themeConfig.typography.fontFamily,
-        }}
-      >
-        {block.items.map((item, index) => (
-          <li
-            key={index}
-            className="flex items-start space-x-3"
-            style={{ color: themeConfig.colors.text }}
-          >
-            <span
-              className="flex-shrink-0 w-2 h-2 rounded-full mt-3"
-              style={{ backgroundColor: themeConfig.colors.primary }}
-            />
-            <span className="leading-relaxed">{item}</span>
-          </li>
-        ))}
-      </ul>
+      {block.animation === 'staggerIn' ? (
+        <StaggeredBlock className="space-y-3 text-lg md:text-xl">
+          {bulletItems}
+        </StaggeredBlock>
+      ) : (
+        <ul
+          className="space-y-3 text-lg md:text-xl"
+          style={{
+            color: themeConfig.colors.text,
+            fontFamily: themeConfig.typography.fontFamily,
+          }}
+        >
+          {bulletItems}
+        </ul>
+      )}
     </BaseBlock>
   );
 }
-
