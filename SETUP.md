@@ -9,12 +9,17 @@
 
 2. **Configure LLM (Language Model):**
    
-   Edit `.env.local` file and set your preferred LLM provider:
+   The application comes with demo mode enabled by default. Edit `.env.local` file to change:
 
-   **Option A: OpenAI (Recommended)**
+   **Default: Demo Mode (No API key needed)**
+   ```env
+   LLM_PROVIDER=demo
+   ```
+
+   **Option A: OpenAI (For real AI generation)**
    ```env
    LLM_PROVIDER=openai
-   LLM_API_KEY=your_openai_api_key_here
+   LLM_API_KEY=your_actual_openai_api_key_here
    LLM_BASE_URL=https://api.openai.com
    LLM_MODEL=gpt-4
    ```
@@ -24,11 +29,6 @@
    LLM_PROVIDER=ollama
    LLM_BASE_URL=http://localhost:11434
    LLM_MODEL=llama2
-   ```
-
-   **Option C: Demo Mode (No API key needed)**
-   ```env
-   LLM_PROVIDER=demo
    ```
 
 3. **Start the development server:**
@@ -57,13 +57,13 @@
 ## Troubleshooting
 
 ### Slides Not Generating
-- Check that your API key is correctly set in `.env.local`
-- Verify the LLM provider is set correctly
+- The application runs in demo mode by default - this is normal!
+- For real AI generation, set up your API key in `.env.local`
 - Check the browser console for error messages
-- Try demo mode first to test the application flow
+- Demo mode generates sample content for testing the interface
 
 ### Demo Mode
-If you don't have API keys, the application will automatically fall back to demo mode, which generates sample content for testing the interface.
+The application runs in demo mode by default, which generates sample content for testing the interface. This is perfect for trying out the application without needing API keys.
 
 ## Features
 
