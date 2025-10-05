@@ -224,52 +224,104 @@ export class PresentationExecutor {
   private async executeContentSlidesStep(): Promise<boolean> {
     await this.delay(1000);
     
-    // Generate content slides based on the plan
-    const contentSlides: Slide[] = [];
-    const contentStepCount = this.plan.totalSlides - 4; // Exclude title, agenda, conclusion, references
-    
-    for (let i = 0; i < contentStepCount; i++) {
-      try {
-        // Call the API to generate rich content slides
-        const response = await fetch('/api/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            topic: this.plan.title,
-            detail: `Generate content for slide ${i + 1} about ${this.plan.title}`,
-            tone: 'Professional',
-            audience: 'General audience',
-            length: 3, // Minimum required by schema
-            theme: 'DeepSpace',
-            enableLive: false,
-            mode: 'execute'
-          }),
-        });
+    try {
+      // Use the new AI slides pipeline to generate diverse content
+      const response = await fetch('/api/ai-slides', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: this.plan.title,
+          theme: 'nebula-dark',
+          audience: 'General audience',
+          tone: 'Professional'
+        }),
+      });
 
-        if (response.ok) {
-          const { deck } = await response.json();
-          if (deck && deck.slides && deck.slides.length > 0) {
-            // Use the first content slide from the generated deck (skip title slide if present)
-            const contentSlideIndex = deck.slides.length > 1 ? 1 : 0; // Use second slide if available, otherwise first
-            const generatedSlide = deck.slides[contentSlideIndex];
-            generatedSlide.id = `slide_${i + 3}`;
-            contentSlides.push(generatedSlide);
-            this.addLog('info', 'step_4', `Created rich content slide ${i + 1}/${contentStepCount}`);
-          } else {
-            throw new Error('No slides generated');
-          }
-        } else {
-          const errorText = await response.text();
-          throw new Error(`API call failed: ${response.status} - ${errorText}`);
-        }
+      if (response.ok) {
+        const { deck } = await response.json();
         
-        // Add delay between slides for live effect
-        await this.delay(500);
-      } catch (error) {
-        console.error(`Error generating slide ${i + 1}:`, error);
-        // Enhanced fallback slide with rich content
+        // Convert AI slides to the current slide format
+        const contentSlides: Slide[] = deck.slides.map((aiSlide: any, index: number) => {
+          const blocks: any[] = [];
+          
+          // Add title block
+          blocks.push({
+            id: `heading_${index + 3}`,
+            type: 'Heading',
+            text: aiSlide.title,
+            animation: 'slideInFromTop'
+          });
+          
+          // Add subtitle if present
+          if (aiSlide.subtitle) {
+            blocks.push({
+              id: `subheading_${index + 3}`,
+              type: 'Subheading',
+              text: aiSlide.subtitle,
+              animation: 'fadeIn'
+            });
+          }
+          
+          // Add bullets if present
+          if (aiSlide.bullets && aiSlide.bullets.length > 0) {
+            blocks.push({
+              id: `bullets_${index + 3}`,
+              type: 'Bullets',
+              items: aiSlide.bullets,
+              animation: 'staggerIn'
+            });
+          }
+          
+          // Add KPIs if present
+          if (aiSlide.kpis && aiSlide.kpis.length > 0) {
+            aiSlide.kpis.forEach((kpi: any, kpiIndex: number) => {
+              blocks.push({
+                id: `kpi_${index + 3}_${kpiIndex}`,
+                type: 'Markdown',
+                md: `**${kpi.label}:** ${kpi.value}${kpi.note ? ` (${kpi.note})` : ''}`,
+                animation: 'slideInFromLeft'
+              });
+            });
+          }
+          
+          // Add visual placeholder if present
+          if (aiSlide.visual && aiSlide.visual.keywords) {
+            blocks.push({
+              id: `visual_${index + 3}`,
+              type: 'Markdown',
+              md: `**Visual:** ${aiSlide.visual.keywords.join(', ')}`,
+              animation: 'fadeIn'
+            });
+          }
+          
+          return {
+            id: `slide_${index + 3}`,
+            layout: this.mapLayout(aiSlide.layout || aiSlide.kind),
+            animation: 'fadeIn',
+            blocks,
+            notes: aiSlide.speakerNotes || `Speaker notes for ${aiSlide.title}`
+          };
+        });
+        
+        // Update state with generated content slides
+        this.state.deck.slides = [...(this.state.deck.slides || []), ...contentSlides];
+        this.addLog('success', 'step_4', `Generated ${contentSlides.length} diverse content slides using AI pipeline`);
+        
+        return true;
+      } else {
+        const errorText = await response.text();
+        throw new Error(`AI slides API call failed: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error generating AI slides:', error);
+      
+      // Fallback to enhanced content generation
+      const contentSlides: Slide[] = [];
+      const contentStepCount = this.plan.totalSlides - 4;
+      
+      for (let i = 0; i < contentStepCount; i++) {
         const fallbackSlide: Slide = {
           id: `slide_${i + 3}`,
           layout: 'title+bullets',
@@ -316,13 +368,30 @@ export class PresentationExecutor {
           notes: `Speaker Notes for ${this.plan.title} - Key Point ${i + 1}:\n\nKey Talking Points:\n• Essential insights about ${this.plan.title.toLowerCase()}\n• Implementation strategies and best practices\n• Real-world applications and case studies\n\nEngagement Tips:\n- Start with a compelling statistic or story\n- Use specific examples and case studies\n- Encourage audience interaction with questions\n- Provide actionable takeaways\n- Connect to real-world applications`
         };
         contentSlides.push(fallbackSlide);
-        this.addLog('warning', 'step_4', `Using enhanced fallback slide ${i + 1}/${contentStepCount}`);
       }
+      
+      this.state.deck.slides = [...(this.state.deck.slides || []), ...contentSlides];
+      this.addLog('warning', 'step_4', `Used fallback content generation for ${contentSlides.length} slides`);
+      
+      return true;
     }
-
-    this.state.deck.slides = [...(this.state.deck.slides || []), ...contentSlides];
-    this.addLog('success', 'step_4', `${contentStepCount} content slides created`);
-    return true;
+  }
+  
+  private mapLayout(aiLayout: string): string {
+    const layoutMap: { [key: string]: string } = {
+      'cover': 'title',
+      'agenda': 'title+bullets',
+      'content': 'title+bullets',
+      'kpi': 'title+bullets',
+      'comparison': 'two-col',
+      'timeline': 'title+bullets',
+      'quote': 'quote',
+      'diagram': 'title+bullets',
+      'summary': 'title+bullets',
+      'references': 'title+bullets'
+    };
+    
+    return layoutMap[aiLayout] || 'title+bullets';
   }
 
   private async executeConclusionStep(): Promise<boolean> {
