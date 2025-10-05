@@ -141,24 +141,24 @@ export class PresentationExecutor {
     await this.delay(1500);
     
     const titleSlide: Slide = {
-      id: 'slide_1',
+      id: `slide_${Date.now()}_title_${Math.random().toString(36).substr(2, 9)}`,
       layout: 'title',
       animation: 'hero',
       blocks: [
         {
-          id: 'title_heading',
+          id: `title_heading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Heading',
           text: this.plan.title,
           animation: 'slideInFromTop'
         },
         {
-          id: 'title_subheading',
+          id: `title_subheading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Subheading',
           text: this.plan.overview,
           animation: 'fadeIn'
         },
         {
-          id: 'title_quote',
+          id: `title_quote_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Quote',
           text: `"Knowledge is power, but enthusiasm pulls the switch."`,
           author: 'Steve Dahl',
@@ -177,24 +177,24 @@ export class PresentationExecutor {
     await this.delay(1500);
     
     const agendaSlide: Slide = {
-      id: 'slide_2',
+      id: `slide_${Date.now()}_agenda_${Math.random().toString(36).substr(2, 9)}`,
       layout: 'title+bullets',
       animation: 'fadeIn',
       blocks: [
         {
-          id: 'agenda_heading',
+          id: `agenda_heading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Heading',
           text: 'Presentation Agenda',
           animation: 'slideInFromTop'
         },
         {
-          id: 'agenda_subheading',
+          id: `agenda_subheading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Subheading',
           text: 'What we\'ll cover in the next few minutes',
           animation: 'fadeIn'
         },
         {
-          id: 'agenda_bullets',
+          id: `agenda_bullets_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Bullets',
           items: [
             'Introduction and Overview',
@@ -249,30 +249,30 @@ export class PresentationExecutor {
       
       for (let i = 0; i < contentStepCount; i++) {
         const fallbackSlide: Slide = {
-          id: `slide_${i + 3}`,
+          id: `slide_${Date.now()}_fallback_${i}_${Math.random().toString(36).substr(2, 9)}`,
           layout: 'title+bullets',
           animation: 'fadeIn',
           blocks: [
             {
-              id: `heading_${i + 3}`,
+              id: `heading_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
               type: 'Heading',
               text: `${this.plan.title} - Key Point ${i + 1}`,
               animation: 'slideInFromTop'
             },
             {
-              id: `subheading_${i + 3}`,
+              id: `subheading_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
               type: 'Subheading',
               text: `Essential insights about ${this.plan.title.toLowerCase()}`,
               animation: 'fadeIn'
             },
             {
-              id: `markdown_${i + 3}`,
+              id: `markdown_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
               type: 'Markdown',
               md: `**Focus Area ${i + 1}:** ${this.plan.title}\n\nThis section provides comprehensive coverage of key aspects related to ${this.plan.title.toLowerCase()}, offering actionable insights and practical applications.\n\n**Key Benefits:**\n- Enhanced understanding\n- Practical implementation\n- Strategic insights`,
               animation: 'slideInFromLeft'
             },
             {
-              id: `bullets_${i + 3}`,
+              id: `bullets_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
               type: 'Bullets',
               items: [
                 `• Critical aspect ${i + 1} of ${this.plan.title.toLowerCase()}`,
@@ -284,7 +284,7 @@ export class PresentationExecutor {
               animation: 'staggerIn'
             },
             {
-              id: `quote_${i + 3}`,
+              id: `quote_${Date.now()}_${i}_${Math.random().toString(36).substr(2, 9)}`,
               type: 'Quote',
               text: `"Understanding ${this.plan.title.toLowerCase()} is essential for achieving success in today's dynamic environment."`,
               author: 'Industry Expert',
@@ -324,24 +324,24 @@ export class PresentationExecutor {
     await this.delay(1500);
     
     const conclusionSlide: Slide = {
-      id: `slide_${this.plan.totalSlides - 1}`,
+      id: `slide_${Date.now()}_conclusion_${Math.random().toString(36).substr(2, 9)}`,
       layout: 'title+bullets',
       animation: 'fadeIn',
       blocks: [
         {
-          id: 'conclusion_heading',
+          id: `conclusion_heading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Heading',
           text: 'Key Takeaways',
           animation: 'slideInFromTop'
         },
         {
-          id: 'conclusion_subheading',
+          id: `conclusion_subheading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Subheading',
           text: 'What we\'ve learned and what\'s next',
           animation: 'fadeIn'
         },
         {
-          id: 'conclusion_bullets',
+          id: `conclusion_bullets_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'Bullets',
           items: [
             'Essential concepts and principles covered',

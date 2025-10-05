@@ -41,11 +41,12 @@ Return ONLY the JSON array, no other text.`;
       
       // Convert to Slide format with rich content
       const slides: Slide[] = slidesData.map((slideData: any, index: number) => {
+        const uniqueId = `slide_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
         const blocks: any[] = [];
         
         // Add title
         blocks.push({
-          id: `heading_${index}`,
+          id: `heading_${uniqueId}`,
           type: 'Heading',
           text: slideData.title,
           animation: 'slideInFromTop'
@@ -54,7 +55,7 @@ Return ONLY the JSON array, no other text.`;
         // Add rich content as markdown
         if (slideData.content) {
           blocks.push({
-            id: `content_${index}`,
+            id: `content_${uniqueId}`,
             type: 'Markdown',
             md: `**Key Insights:** ${slideData.content}`,
             animation: 'slideInFromLeft'
@@ -64,7 +65,7 @@ Return ONLY the JSON array, no other text.`;
         // Add bullets
         if (slideData.bullets && slideData.bullets.length > 0) {
           blocks.push({
-            id: `bullets_${index}`,
+            id: `bullets_${uniqueId}`,
             type: 'Bullets',
             items: slideData.bullets,
             animation: 'staggerIn'
@@ -73,7 +74,7 @@ Return ONLY the JSON array, no other text.`;
         
         // Add a relevant quote or statistic
         blocks.push({
-          id: `quote_${index}`,
+          id: `quote_${uniqueId}`,
           type: 'Quote',
           text: this.generateRelevantQuote(slideData.title, slideData.content),
           author: 'Industry Expert',
@@ -81,7 +82,7 @@ Return ONLY the JSON array, no other text.`;
         });
         
         return {
-          id: `slide_${index + 1}`,
+          id: uniqueId,
           layout: 'title+bullets',
           animation: 'fadeIn',
           blocks,
@@ -122,31 +123,32 @@ Return ONLY the JSON array, no other text.`;
     const contentTopics = this.getTopicSpecificContent(topic, isTech, isHealth, isBusiness);
     
     contentTopics.forEach((topicData, index) => {
+      const uniqueId = `slide_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
       slides.push({
-        id: `slide_${index + 1}`,
+        id: uniqueId,
         layout: 'title+bullets',
         animation: 'fadeIn',
         blocks: [
           {
-            id: `heading_${index + 1}`,
+            id: `heading_${uniqueId}`,
             type: 'Heading',
             text: topicData.title,
             animation: 'slideInFromTop'
           },
           {
-            id: `content_${index + 1}`,
+            id: `content_${uniqueId}`,
             type: 'Markdown',
             md: `**Key Insights:** ${topicData.content}`,
             animation: 'slideInFromLeft'
           },
           {
-            id: `bullets_${index + 1}`,
+            id: `bullets_${uniqueId}`,
             type: 'Bullets',
             items: topicData.bullets,
             animation: 'staggerIn'
           },
           {
-            id: `quote_${index + 1}`,
+            id: `quote_${uniqueId}`,
             type: 'Quote',
             text: topicData.quote,
             author: topicData.author,
