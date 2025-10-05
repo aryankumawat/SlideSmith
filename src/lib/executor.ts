@@ -143,21 +143,33 @@ export class PresentationExecutor {
     const titleSlide: Slide = {
       id: 'slide_1',
       layout: 'title',
+      animation: 'hero',
       blocks: [
         {
+          id: 'title_heading',
           type: 'Heading',
-          text: this.plan.title
+          text: this.plan.title,
+          animation: 'slideInFromTop'
         },
         {
+          id: 'title_subheading',
           type: 'Subheading',
-          text: this.plan.overview
+          text: this.plan.overview,
+          animation: 'fadeIn'
+        },
+        {
+          id: 'title_quote',
+          type: 'Quote',
+          text: `"Knowledge is power, but enthusiasm pulls the switch."`,
+          author: 'Steve Dahl',
+          animation: 'slideInFromBottom'
         }
       ],
-      notes: `Welcome to ${this.plan.title}. ${this.plan.overview}`
+      notes: `Welcome to ${this.plan.title}. ${this.plan.overview}\n\nOpening Tips:\n- Make eye contact with the audience\n- Smile and show enthusiasm\n- Set the tone for the presentation\n- Establish credibility and expertise`
     };
 
     this.state.deck.slides = [titleSlide];
-    this.addLog('success', 'step_2', 'Title slide created');
+    this.addLog('success', 'step_2', 'Enhanced title slide created');
     return true;
   }
 
@@ -167,23 +179,45 @@ export class PresentationExecutor {
     const agendaSlide: Slide = {
       id: 'slide_2',
       layout: 'title+bullets',
+      animation: 'fadeIn',
       blocks: [
         {
+          id: 'agenda_heading',
           type: 'Heading',
-          text: 'Agenda'
+          text: 'Presentation Agenda',
+          animation: 'slideInFromTop'
         },
         {
+          id: 'agenda_subheading',
+          type: 'Subheading',
+          text: 'What we\'ll cover in the next few minutes',
+          animation: 'fadeIn'
+        },
+        {
+          id: 'agenda_bullets',
           type: 'Bullets',
-          items: this.plan.steps
-            .filter(step => ['step_4', 'step_5'].includes(step.id))
-            .map(step => step.title)
+          items: [
+            'Introduction and Overview',
+            'Key Concepts and Principles',
+            'Real-world Applications',
+            'Best Practices and Strategies',
+            'Future Trends and Opportunities',
+            'Q&A and Discussion'
+          ],
+          animation: 'staggerIn'
+        },
+        {
+          id: 'agenda_note',
+          type: 'Markdown',
+          md: `**Duration:** ${this.plan.estimatedDuration}\n\n**Format:** Interactive presentation with Q&A\n\n**Takeaways:** Actionable insights and practical knowledge`,
+          animation: 'slideInFromLeft'
         }
       ],
-      notes: 'Walk through the agenda and set expectations for the presentation.'
+      notes: 'Walk through the agenda and set expectations for the presentation.\n\nAgenda Tips:\n- Keep it concise and clear\n- Highlight the value for the audience\n- Mention timing and format\n- Encourage questions throughout'
     };
 
     this.state.deck.slides = [...(this.state.deck.slides || []), agendaSlide];
-    this.addLog('success', 'step_3', 'Agenda slide created');
+    this.addLog('success', 'step_3', 'Enhanced agenda slide created');
     return true;
   }
 
@@ -196,61 +230,93 @@ export class PresentationExecutor {
     
     for (let i = 0; i < contentStepCount; i++) {
       try {
-        // Create a mock section for slide generation
-        const mockSection = {
-          title: `Key Point ${i + 1}`,
-          objective: `Present important information about ${this.plan.title.toLowerCase()}`,
-          keyPoints: [
-            'Important point 1',
-            'Important point 2', 
-            'Important point 3',
-            'Important point 4',
-            'Important point 5'
-          ]
-        };
+        // Call the API to generate rich content slides
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            topic: this.plan.title,
+            detail: `Generate content for slide ${i + 1} about ${this.plan.title}`,
+            tone: 'Professional',
+            audience: 'General audience',
+            length: 3, // Minimum required by schema
+            theme: 'DeepSpace',
+            enableLive: false,
+            mode: 'execute'
+          }),
+        });
 
-        // Try to generate slide using the slidewriter
-        const slide = await generateSlide(
-          mockSection,
-          i + 3,
-          this.plan.totalSlides,
-          'Corporate',
-          false
-        );
-        
-        contentSlides.push(slide);
-        this.addLog('info', 'step_4', `Creating content slide ${i + 1}/${contentStepCount}`);
+        if (response.ok) {
+          const { deck } = await response.json();
+          if (deck && deck.slides && deck.slides.length > 0) {
+            // Use the first content slide from the generated deck (skip title slide if present)
+            const contentSlideIndex = deck.slides.length > 1 ? 1 : 0; // Use second slide if available, otherwise first
+            const generatedSlide = deck.slides[contentSlideIndex];
+            generatedSlide.id = `slide_${i + 3}`;
+            contentSlides.push(generatedSlide);
+            this.addLog('info', 'step_4', `Created rich content slide ${i + 1}/${contentStepCount}`);
+          } else {
+            throw new Error('No slides generated');
+          }
+        } else {
+          const errorText = await response.text();
+          throw new Error(`API call failed: ${response.status} - ${errorText}`);
+        }
         
         // Add delay between slides for live effect
         await this.delay(500);
       } catch (error) {
         console.error(`Error generating slide ${i + 1}:`, error);
-        // Fallback to basic slide
+        // Enhanced fallback slide with rich content
         const fallbackSlide: Slide = {
           id: `slide_${i + 3}`,
           layout: 'title+bullets',
+          animation: 'fadeIn',
           blocks: [
             {
+              id: `heading_${i + 3}`,
               type: 'Heading',
-              text: `Key Point ${i + 1}`
+              text: `${this.plan.title} - Key Point ${i + 1}`,
+              animation: 'slideInFromTop'
             },
             {
+              id: `subheading_${i + 3}`,
+              type: 'Subheading',
+              text: `Essential insights about ${this.plan.title.toLowerCase()}`,
+              animation: 'fadeIn'
+            },
+            {
+              id: `markdown_${i + 3}`,
               type: 'Markdown',
-              md: `This is the content for slide ${i + 3}. It contains important information about ${this.plan.title.toLowerCase()}.`
+              md: `**Focus Area ${i + 1}:** ${this.plan.title}\n\nThis section provides comprehensive coverage of key aspects related to ${this.plan.title.toLowerCase()}, offering actionable insights and practical applications.\n\n**Key Benefits:**\n- Enhanced understanding\n- Practical implementation\n- Strategic insights`,
+              animation: 'slideInFromLeft'
             },
             {
+              id: `bullets_${i + 3}`,
               type: 'Bullets',
               items: [
-                'Important point 1',
-                'Important point 2',
-                'Important point 3'
-              ]
+                `• Critical aspect ${i + 1} of ${this.plan.title.toLowerCase()}`,
+                `• Implementation strategies and best practices`,
+                `• Real-world applications and case studies`,
+                `• Future trends and opportunities`,
+                `• Actionable recommendations for success`
+              ],
+              animation: 'staggerIn'
+            },
+            {
+              id: `quote_${i + 3}`,
+              type: 'Quote',
+              text: `"Understanding ${this.plan.title.toLowerCase()} is essential for achieving success in today's dynamic environment."`,
+              author: 'Industry Expert',
+              animation: 'fadeIn'
             }
           ],
-          notes: `Speaker notes for Key Point ${i + 1}`
+          notes: `Speaker Notes for ${this.plan.title} - Key Point ${i + 1}:\n\nKey Talking Points:\n• Essential insights about ${this.plan.title.toLowerCase()}\n• Implementation strategies and best practices\n• Real-world applications and case studies\n\nEngagement Tips:\n- Start with a compelling statistic or story\n- Use specific examples and case studies\n- Encourage audience interaction with questions\n- Provide actionable takeaways\n- Connect to real-world applications`
         };
         contentSlides.push(fallbackSlide);
-        this.addLog('warning', 'step_4', `Using fallback slide ${i + 1}/${contentStepCount}`);
+        this.addLog('warning', 'step_4', `Using enhanced fallback slide ${i + 1}/${contentStepCount}`);
       }
     }
 
@@ -265,21 +331,51 @@ export class PresentationExecutor {
     const conclusionSlide: Slide = {
       id: `slide_${this.plan.totalSlides - 1}`,
       layout: 'title+bullets',
+      animation: 'fadeIn',
       blocks: [
         {
+          id: 'conclusion_heading',
           type: 'Heading',
-          text: 'Conclusion'
+          text: 'Key Takeaways',
+          animation: 'slideInFromTop'
         },
         {
+          id: 'conclusion_subheading',
+          type: 'Subheading',
+          text: 'What we\'ve learned and what\'s next',
+          animation: 'fadeIn'
+        },
+        {
+          id: 'conclusion_bullets',
+          type: 'Bullets',
+          items: [
+            'Essential concepts and principles covered',
+            'Practical applications and real-world examples',
+            'Best practices for implementation',
+            'Future trends and opportunities',
+            'Actionable next steps for success'
+          ],
+          animation: 'staggerIn'
+        },
+        {
+          id: 'conclusion_quote',
+          type: 'Quote',
+          text: `"The future belongs to those who understand ${this.plan.title.toLowerCase()} and can apply it effectively."`,
+          author: 'Industry Leader',
+          animation: 'slideInFromBottom'
+        },
+        {
+          id: 'conclusion_markdown',
           type: 'Markdown',
-          md: `## Summary\n\nThank you for your attention. This presentation covered the key aspects of ${this.plan.title.toLowerCase()}.\n\n## Next Steps\n\n- Review the key points\n- Take action on recommendations\n- Questions and discussion`
+          md: `## Thank You!\n\n**Questions & Discussion**\n\n**Contact Information:**\n- Email: presenter@company.com\n- LinkedIn: linkedin.com/in/presenter\n\n**Resources:**\n- Additional materials available\n- Follow-up session scheduled\n- Implementation support provided`,
+          animation: 'slideInFromLeft'
         }
       ],
-      notes: 'Summarize key points and thank the audience. Invite questions.'
+      notes: 'Summarize key points and thank the audience. Invite questions.\n\nConclusion Tips:\n- Reinforce the main message\n- Provide clear next steps\n- Encourage questions and discussion\n- Thank the audience for their time\n- Provide contact information for follow-up'
     };
 
     this.state.deck.slides = [...(this.state.deck.slides || []), conclusionSlide];
-    this.addLog('success', 'step_5', 'Conclusion slide created');
+    this.addLog('success', 'step_5', 'Enhanced conclusion slide created');
     return true;
   }
 

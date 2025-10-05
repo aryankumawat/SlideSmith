@@ -130,7 +130,7 @@ export const DeckSchema = z.object({
   id: z.string(),
   title: z.string(),
   subtitle: z.string().optional(),
-  theme: z.enum(["DeepSpace", "Ultraviolet", "Minimal", "Corporate", "NeonGrid"]),
+  theme: z.enum(['DeepSpace', 'Ultraviolet', 'Minimal', 'Corporate', 'NeonGrid', 'Academic', 'Conference', 'Journal', 'Thesis', 'Beamer']).optional(),
   slides: z.array(SlideSchema),
   metadata: z.object({
     createdAt: z.string(),
@@ -156,13 +156,13 @@ export const OutlineSchema = z.object({
 });
 
 export const GenerateRequestSchema = z.object({
-  topic: z.string().min(1).max(200),
-  detail: z.string().max(1000).optional(),
-  tone: z.enum(['Professional', 'Academic', 'Creative', 'Casual']),
-  audience: z.enum(['General audience', 'Students', 'Researchers', 'Executives', 'Technical']),
-  length: z.number().min(3).max(50),
-  theme: z.enum(["DeepSpace", "Ultraviolet", "Minimal", "Corporate", "NeonGrid"]),
-  enableLive: z.boolean().default(false),
+  topic: z.string().min(1).max(500),
+  detail: z.string().max(2000).optional(),
+  tone: z.string().optional(),
+  audience: z.string().optional(),
+  length: z.number().min(3).max(50).optional(),
+  theme: z.enum(['DeepSpace', 'Ultraviolet', 'Minimal', 'Corporate', 'NeonGrid', 'Academic', 'Conference', 'Journal', 'Thesis', 'Beamer']).optional(),
+  enableLive: z.boolean().optional(),
   mode: z.enum(['plan', 'execute']).default('plan'),
 });
 
