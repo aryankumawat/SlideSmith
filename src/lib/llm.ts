@@ -69,33 +69,44 @@ export class LLMClient {
       headers['X-Title'] = 'SlideSmith';
     }
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
-    });
+    try {
+      const response = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 4000,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API Error Response:', errorText);
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Invalid API response structure:', data);
+        throw new Error('Invalid API response structure');
+      }
+
+      return {
+        content: data.choices[0].message.content,
+        usage: data.usage,
+      };
+    } catch (error) {
+      console.error('Network/API Error:', error);
+      throw error;
     }
-
-    const data = await response.json();
-    return {
-      content: data.choices[0].message.content,
-      usage: data.usage,
-    };
   }
 
   private async callOllama(prompt: string, baseUrl: string, model: string): Promise<LLMResponse> {
@@ -169,8 +180,11 @@ export class LLMClient {
 
   private parseOutline(content: string): Outline {
     try {
+      // Clean the content - remove any control characters that might cause JSON parsing issues
+      const cleanedContent = content.replace(/[\x00-\x1F\x7F]/g, '');
+      
       // Try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         return parsed;
@@ -205,14 +219,18 @@ export class LLMClient {
       };
     } catch (error) {
       console.error('Error parsing outline:', error);
+      console.error('Content that failed to parse:', content);
       throw new Error('Failed to parse outline from LLM response');
     }
   }
 
   private parseSlide(content: string): any {
     try {
+      // Clean the content - remove any control characters that might cause JSON parsing issues
+      const cleanedContent = content.replace(/[\x00-\x1F\x7F]/g, '');
+      
       // Try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
@@ -235,6 +253,7 @@ export class LLMClient {
       };
     } catch (error) {
       console.error('Error parsing slide:', error);
+      console.error('Content that failed to parse:', content);
       throw new Error('Failed to parse slide from LLM response');
     }
   }

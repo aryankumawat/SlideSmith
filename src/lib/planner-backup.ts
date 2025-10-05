@@ -1,30 +1,28 @@
 import { z } from 'zod';
 import { LLMClient, createLLMClient } from './llm';
 
-// Planning step schema
-const PlanningStepSchema = z.object({
+export const PlanningStepSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
-  status: z.enum(['pending', 'in_progress', 'completed', 'failed']),
+  status: z.enum(['pending', 'in_progress', 'completed']),
   estimatedTime: z.string(),
-  dependencies: z.array(z.string()),
+  dependencies: z.array(z.string()).optional(),
 });
 
-// Presentation plan schema
-const PresentationPlanSchema = z.object({
+export const PresentationPlanSchema = z.object({
   id: z.string(),
   title: z.string(),
   overview: z.string(),
   totalSlides: z.number(),
   estimatedDuration: z.string(),
+  steps: z.array(PlanningStepSchema),
   priority: z.enum(['low', 'medium', 'high']),
   complexity: z.enum(['simple', 'moderate', 'complex']),
-  steps: z.array(PlanningStepSchema),
 });
 
-export type PresentationPlan = z.infer<typeof PresentationPlanSchema>;
 export type PlanningStep = z.infer<typeof PlanningStepSchema>;
+export type PresentationPlan = z.infer<typeof PresentationPlanSchema>;
 
 export class PresentationPlanner {
   private llm: LLMClient;
@@ -47,9 +45,8 @@ export class PresentationPlanner {
       const prompt = this.createPlanningPrompt(request);
       const response = await this.llm.generateContent(prompt);
       
-      // Clean the response and try to parse as JSON
-      const cleanedResponse = response.replace(/[\x00-\x1F\x7F]/g, '');
-      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+      // Try to parse the response as JSON
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         return PresentationPlanSchema.parse(parsed);
@@ -71,26 +68,25 @@ export class PresentationPlanner {
     theme: string;
     includeLiveWidgets: boolean;
   }): string {
-    return `You are an expert presentation planner. Create a detailed plan for a ${request.tone.toLowerCase()} presentation about "${request.topic}".
+    return `Create a detailed presentation plan for the following request:
 
-Presentation Details:
-- Topic: ${request.topic}
-- Detail: ${request.detail}
-- Tone: ${request.tone}
-- Audience: ${request.audience}
-- Length: ${request.length} slides
-- Theme: ${request.theme}
-- Include Live Widgets: ${request.includeLiveWidgets}
+Topic: ${request.topic}
+Details: ${request.detail}
+Tone: ${request.tone}
+Audience: ${request.audience}
+Length: ${request.length} slides
+Theme: ${request.theme}
+Live Widgets: ${request.includeLiveWidgets ? 'Yes' : 'No'}
 
-Create a JSON plan with this exact structure:
+Generate a structured plan with the following format:
 {
   "id": "plan_${Date.now()}",
-  "title": "${request.topic} Presentation",
-  "overview": "A ${request.tone} presentation about ${request.topic} for ${request.audience}",
+  "title": "Presentation Title",
+  "overview": "Brief overview of the presentation",
   "totalSlides": ${request.length},
-  "estimatedDuration": "${Math.ceil(request.length * 2)} minutes",
+  "estimatedDuration": "X minutes",
   "priority": "medium",
-  "complexity": "${request.length <= 5 ? 'simple' : request.length <= 10 ? 'moderate' : 'complex'}",
+  "complexity": "moderate",
   "steps": [
     {
       "id": "step_1",
@@ -110,17 +106,17 @@ Create a JSON plan with this exact structure:
     },
     {
       "id": "step_3",
-      "title": "Build Agenda Slide", 
+      "title": "Build Agenda Slide",
       "description": "Create clear agenda outlining presentation structure",
-      "status": "pending",
+      "status": "pending", 
       "estimatedTime": "2-3 minutes",
       "dependencies": ["step_1"]
     },
     {
       "id": "step_4",
       "title": "Develop Content Slides",
-      "description": "Create ${Math.max(1, request.length - 4)} content slides with key information",
-      "status": "pending", 
+      "description": "Create ${request.length - 4} content slides with key information",
+      "status": "pending",
       "estimatedTime": "10-15 minutes",
       "dependencies": ["step_2", "step_3"]
     },
@@ -129,7 +125,7 @@ Create a JSON plan with this exact structure:
       "title": "Add Conclusion Slide",
       "description": "Summarize key points and provide next steps",
       "status": "pending",
-      "estimatedTime": "2-3 minutes", 
+      "estimatedTime": "2-3 minutes",
       "dependencies": ["step_4"]
     },
     {
@@ -159,7 +155,7 @@ Create a JSON plan with this exact structure:
   ]
 }
 
-Return only the JSON object, no additional text.`;
+Make sure the plan is realistic and follows a logical sequence. Each step should build upon the previous ones.`;
   }
 
   private createDemoPlan(request: {
@@ -178,7 +174,7 @@ Return only the JSON object, no additional text.`;
       totalSlides: request.length,
       estimatedDuration: `${Math.ceil(request.length * 2)} minutes`,
       priority: 'medium',
-      complexity: request.length <= 5 ? 'simple' : request.length <= 10 ? 'moderate' : 'complex',
+      complexity: request.length > 10 ? 'complex' : request.length > 6 ? 'moderate' : 'simple',
       steps: [
         {
           id: 'step_1',
@@ -186,7 +182,7 @@ Return only the JSON object, no additional text.`;
           description: 'Collect relevant information and data for the presentation',
           status: 'pending',
           estimatedTime: '5-10 minutes',
-          dependencies: [],
+          dependencies: []
         },
         {
           id: 'step_2',
@@ -194,7 +190,7 @@ Return only the JSON object, no additional text.`;
           description: 'Design engaging title slide with main topic and subtitle',
           status: 'pending',
           estimatedTime: '2-3 minutes',
-          dependencies: ['step_1'],
+          dependencies: ['step_1']
         },
         {
           id: 'step_3',
@@ -202,15 +198,15 @@ Return only the JSON object, no additional text.`;
           description: 'Create clear agenda outlining presentation structure',
           status: 'pending',
           estimatedTime: '2-3 minutes',
-          dependencies: ['step_1'],
+          dependencies: ['step_1']
         },
         {
           id: 'step_4',
           title: 'Develop Content Slides',
-          description: `Create ${Math.max(1, request.length - 4)} content slides with key information`,
+          description: `Create ${request.length - 4} content slides with key information`,
           status: 'pending',
           estimatedTime: '10-15 minutes',
-          dependencies: ['step_2', 'step_3'],
+          dependencies: ['step_2', 'step_3']
         },
         {
           id: 'step_5',
@@ -218,7 +214,7 @@ Return only the JSON object, no additional text.`;
           description: 'Summarize key points and provide next steps',
           status: 'pending',
           estimatedTime: '2-3 minutes',
-          dependencies: ['step_4'],
+          dependencies: ['step_4']
         },
         {
           id: 'step_6',
@@ -226,17 +222,15 @@ Return only the JSON object, no additional text.`;
           description: `Apply ${request.theme} theme and ensure visual consistency`,
           status: 'pending',
           estimatedTime: '3-5 minutes',
-          dependencies: ['step_5'],
+          dependencies: ['step_5']
         },
         {
           id: 'step_7',
           title: 'Add Live Widgets',
-          description: request.includeLiveWidgets
-            ? 'Integrate live data widgets and interactive elements'
-            : 'Skip live widgets as requested',
+          description: request.includeLiveWidgets ? 'Integrate live data widgets and interactive elements' : 'Skip live widgets as requested',
           status: 'pending',
           estimatedTime: request.includeLiveWidgets ? '5-8 minutes' : '0 minutes',
-          dependencies: ['step_6'],
+          dependencies: ['step_6']
         },
         {
           id: 'step_8',
@@ -244,9 +238,87 @@ Return only the JSON object, no additional text.`;
           description: 'Review all slides for consistency and quality',
           status: 'pending',
           estimatedTime: '3-5 minutes',
-          dependencies: ['step_7'],
-        },
-      ],
+          dependencies: ['step_7']
+        }
+      ]
+    };
+  }
+
+  async executeStep(plan: PresentationPlan, stepId: string): Promise<{
+    success: boolean;
+    result?: any;
+    error?: string;
+  }> {
+    const step = plan.steps.find(s => s.id === stepId);
+    if (!step) {
+      return { success: false, error: 'Step not found' };
+    }
+
+    // Mark step as in progress
+    step.status = 'in_progress';
+
+    try {
+      // Simulate step execution with realistic delays
+      const delay = this.getStepDelay(step.estimatedTime);
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      // Mark step as completed
+      step.status = 'completed';
+
+      return {
+        success: true,
+        result: {
+          stepId,
+          status: 'completed',
+          completedAt: new Date().toISOString()
+        }
+      };
+    } catch (error) {
+      step.status = 'pending';
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  private getStepDelay(estimatedTime: string): number {
+    // Convert estimated time to milliseconds for simulation
+    const timeStr = estimatedTime.toLowerCase();
+    if (timeStr.includes('0 minutes')) return 0;
+    if (timeStr.includes('2-3 minutes')) return 2000;
+    if (timeStr.includes('3-5 minutes')) return 3000;
+    if (timeStr.includes('5-8 minutes')) return 5000;
+    if (timeStr.includes('5-10 minutes')) return 5000;
+    if (timeStr.includes('10-15 minutes')) return 8000;
+    return 3000; // Default delay
+  }
+
+  getNextExecutableStep(plan: PresentationPlan): PlanningStep | null {
+    return plan.steps.find(step => 
+      step.status === 'pending' && 
+      step.dependencies?.every(depId => 
+        plan.steps.find(s => s.id === depId)?.status === 'completed'
+      )
+    ) || null;
+  }
+
+  getPlanProgress(plan: PresentationPlan): {
+    completed: number;
+    total: number;
+    percentage: number;
+    currentStep: PlanningStep | null;
+  } {
+    const completed = plan.steps.filter(s => s.status === 'completed').length;
+    const total = plan.steps.length;
+    const percentage = Math.round((completed / total) * 100);
+    const currentStep = this.getNextExecutableStep(plan);
+
+    return {
+      completed,
+      total,
+      percentage,
+      currentStep
     };
   }
 }
