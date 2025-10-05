@@ -80,3 +80,31 @@ If you encounter issues:
 2. Verify your environment variables
 3. Try demo mode to isolate the issue
 4. Check the network tab for API call failures
+
+### OpenRouter API Key (Recommended)
+OpenRouter provides access to multiple AI models at competitive prices:
+
+1. Go to [OpenRouter](https://openrouter.ai/)
+2. Sign up for an account
+3. Navigate to API Keys section
+4. Create a new API key
+5. Copy the key and configure your `.env.local`:
+
+```env
+LLM_PROVIDER=openai
+LLM_API_KEY=sk-or-v1-your-openrouter-api-key-here
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_MODEL=anthropic/claude-3.5-sonnet
+```
+
+**Popular OpenRouter Models:**
+- `anthropic/claude-3.5-sonnet` - High quality, good for complex tasks
+- `openai/gpt-4o` - Fast and reliable
+- `openai/gpt-3.5-turbo` - Cost-effective option
+- `meta-llama/llama-3.1-70b-instruct` - Open source alternative
+
+**Advantages of OpenRouter:**
+- Access to multiple AI providers
+- Competitive pricing
+- No rate limits
+- Easy model switching
