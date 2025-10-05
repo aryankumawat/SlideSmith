@@ -70,6 +70,10 @@ export class LLMClient {
     }
 
     try {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
         headers,
@@ -84,7 +88,10 @@ export class LLMClient {
           temperature: 0.7,
           max_tokens: 4000,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -104,36 +111,54 @@ export class LLMClient {
         usage: data.usage,
       };
     } catch (error) {
+      if (error.name === 'AbortError') {
+        console.error('Request timeout after 30 seconds');
+        throw new Error('Request timeout - please try again');
+      }
       console.error('Network/API Error:', error);
       throw error;
     }
   }
 
   private async callOllama(prompt: string, baseUrl: string, model: string): Promise<LLMResponse> {
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          num_predict: 4000,
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    try {
+      const response = await fetch(`${baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }),
-    });
+        body: JSON.stringify({
+          model,
+          prompt,
+          stream: false,
+          options: {
+            temperature: 0.7,
+            num_predict: 4000,
+          },
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return {
+        content: data.response,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please try again');
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    return {
-      content: data.response,
-    };
   }
 
   private async callDemo(prompt: string): Promise<LLMResponse> {
@@ -172,9 +197,23 @@ export class LLMClient {
       };
     }
     
-    // Default demo response
+    // Default demo response for slide generation
     return {
-      content: 'This is a demo response. To use real AI generation, please configure your API keys in the .env.local file.'
+      content: JSON.stringify({
+        id: `slide-${Date.now()}`,
+        layout: 'title+bullets',
+        blocks: [
+          {
+            type: 'Heading',
+            text: 'Demo Slide Title',
+          },
+          {
+            type: 'Bullets',
+            items: ['Demo point 1', 'Demo point 2', 'Demo point 3', 'Demo point 4', 'Demo point 5'],
+          },
+        ],
+        notes: 'This is a demo slide. Configure your API keys for real AI generation.',
+      })
     };
   }
 

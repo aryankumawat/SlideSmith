@@ -1,5 +1,10 @@
-import { LLMClient } from './llm';
+import { LLMClient, createLLMClient } from './llm';
 import { Slide, SlideBlock, OutlineItem, Theme } from './schema';
+
+// Helper function to generate unique IDs
+function generateId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
 
 export async function generateSlide(
   section: OutlineItem,
@@ -8,12 +13,7 @@ export async function generateSlide(
   theme: Theme = 'DeepSpace',
   enableLive: boolean = false
 ): Promise<Slide> {
-  const llm = new LLMClient({
-    provider: (process.env.LLM_PROVIDER as any) || 'openai',
-    apiKey: process.env.LLM_API_KEY || '',
-    baseUrl: process.env.LLM_BASE_URL || 'https://api.openai.com',
-    model: process.env.LLM_MODEL || 'gpt-4',
-  });
+  const llm = createLLMClient();
 
   const prompt = createSlidePrompt(section, slideIndex, totalSlides, theme, enableLive);
   const response = await llm.generateContent(prompt);
@@ -53,80 +53,64 @@ Create a JSON slide with this exact structure:
   "notes": "Speaker notes for this slide (2-3 sentences)"
 }
 
-Available block types:
-- "Heading": Main title (max 8 words)
-- "Subheading": Subtitle (max 15 words) 
-- "Markdown": Rich text content
-- "Bullets": Bullet points (max 6 items, 7±2 rule)
-- "Image": Image with caption
-- "Quote": Quote with optional author
-- "Code": Code block with language
-- "Chart": Data visualization
-- "Live": Live widget (only if enableLive=true)
+Requirements:
+- Make the content relevant to "${section.title}"
+- Use professional, engaging language
+- Keep bullet points concise (max 8 words each)
+- Ensure content is accurate and informative
+- Theme: ${theme}
+- Live widgets: ${enableLive ? 'enabled' : 'disabled'}
 
-Available layouts:
-- "title": Title slide
-- "title+bullets": Title with bullet points
-- "two-col": Two column layout
-- "media-left": Media on left, text on right
-- "media-right": Media on right, text on left
-- "quote": Quote slide
-- "chart": Chart-focused slide
-- "end": Conclusion slide
-
-Guidelines:
-- Keep text concise and scannable
-- Use active voice and strong verbs
-- Follow 7±2 rule for bullet points
-- Include specific, concrete details
-- Make it visually interesting
-- Speaker notes should be helpful for presenter
-- Choose appropriate layout for content type
-${enableLive ? '- Consider adding a Live widget if relevant (chart, ticker, countdown, map, iframe)' : ''}
-
-Theme: ${theme} (consider visual style in content suggestions)
-
-Return only the JSON, no other text.`;
+Return only the JSON object, no additional text.`;
 }
 
 function parseSlideFromResponse(response: string, section: OutlineItem, slideIndex: number): Slide {
   try {
+    // Clean the response - remove any control characters that might cause JSON parsing issues
+    const cleanedResponse = response.replace(/[\x00-\x1F\x7F]/g, '');
+    
     // Try to extract JSON from the response
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       
-      // Validate and clean the slide
+      // Validate and ensure required fields exist
       return {
         id: parsed.id || `slide-${Date.now()}-${slideIndex}`,
         layout: parsed.layout || 'title+bullets',
-        blocks: Array.isArray(parsed.blocks) ? parsed.blocks : [],
-        notes: parsed.notes || `Speaker notes for ${section.title}`,
+        blocks: parsed.blocks || [
+          {
+            type: 'Heading',
+            text: section.title,
+          },
+          {
+            type: 'Bullets',
+            items: section.keyPoints.slice(0, 6),
+          },
+        ],
+        notes: parsed.notes || `Speaker notes for ${section.title}: ${section.objective}`,
       };
     }
   } catch (error) {
-    console.error('Error parsing slide from LLM response:', error);
+    console.error('Error parsing slide from response:', error);
+    console.error('Response that failed to parse:', response);
   }
-
-  // Fallback: create a basic slide
-  return createFallbackSlide(section, slideIndex);
-}
-
-function createFallbackSlide(section: OutlineItem, slideIndex: number): Slide {
+  
+  // Fallback: create a basic slide structure
   return {
     id: `slide-${Date.now()}-${slideIndex}`,
     layout: 'title+bullets',
     blocks: [
       {
-        type: 'Heading' as const,
+        type: 'Heading',
         text: section.title,
       },
       {
-        type: 'Subheading' as const,
+        type: 'Subheading',
         text: section.objective,
       },
       {
-        type: 'Bullets' as const,
+        type: 'Bullets',
         items: section.keyPoints.slice(0, 6),
       },
     ],
@@ -134,21 +118,23 @@ function createFallbackSlide(section: OutlineItem, slideIndex: number): Slide {
   };
 }
 
-export function createTitleSlide(title: string, subtitle?: string): Slide {
+export function createTitleSlide(title: string, subtitle: string): Slide {
   return {
     id: 'slide-title',
-    layout: 'title',
+    layout: 'title+subtitle',
     blocks: [
       {
-        type: 'Heading' as const,
+        id: generateId('heading'),
+        type: 'Heading',
         text: title,
       },
-      ...(subtitle ? [{
-        type: 'Subheading' as const,
+      {
+        id: generateId('subheading'),
+        type: 'Subheading',
         text: subtitle,
-      }] : []),
+      },
     ],
-    notes: 'Welcome to the presentation. Introduce yourself and the topic.',
+    notes: 'Welcome the audience and introduce yourself. Set the tone for the presentation.',
   };
 }
 
@@ -172,45 +158,39 @@ export function createAgendaSlide(agenda: OutlineItem[]): Slide {
   };
 }
 
-export function createConclusionSlide(conclusion: string, references?: string[]): Slide {
-  const blocks: SlideBlock[] = [
-    {
-      id: generateId('heading'),
-      type: 'Heading',
-      text: 'Conclusion',
-    },
-    {
-      id: generateId('markdown'),
-      type: 'Markdown',
-      md: conclusion,
-    },
-  ];
-
-  if (references && references.length > 0) {
-    blocks.push({
-      id: generateId('subheading'),
-      type: 'Subheading',
-      text: 'References',
-    });
-    blocks.push({
-      id: generateId('bullets'),
-      type: 'Bullets',
-      items: references.slice(0, 6),
-    });
-  }
-
+export function createConclusionSlide(conclusion: string, references: string[]): Slide {
   return {
     id: 'slide-conclusion',
     layout: 'title+bullets',
-    blocks,
-    notes: 'Summarize key points and thank the audience. Invite questions.',
+    blocks: [
+      {
+        id: generateId('heading'),
+        type: 'Heading',
+        text: 'Conclusion',
+      },
+      {
+        id: generateId('markdown'),
+        type: 'Markdown',
+        md: conclusion,
+      },
+      ...(references.length > 0 ? [{
+        id: generateId('subheading'),
+        type: 'Subheading',
+        text: 'References',
+      }, {
+        id: generateId('bullets'),
+        type: 'Bullets',
+        items: references,
+      }] : []),
+    ],
+    notes: 'Summarize key points and provide clear next steps. Thank the audience.',
   };
 }
 
 export function createThankYouSlide(): Slide {
   return {
-    id: 'slide-thankyou',
-    layout: 'title',
+    id: 'slide-thank-you',
+    layout: 'title+subtitle',
     blocks: [
       {
         id: generateId('heading'),
@@ -220,22 +200,9 @@ export function createThankYouSlide(): Slide {
       {
         id: generateId('subheading'),
         type: 'Subheading',
-        text: 'Questions?',
+        text: 'Questions & Discussion',
       },
     ],
-    notes: 'Thank the audience and invite questions. Be available for follow-up.',
+    notes: 'Thank the audience and open the floor for questions.',
   };
-}
-
-export function validateSlide(slide: any): slide is Slide {
-  if (!slide || typeof slide !== 'object') return false;
-  if (!slide.id || typeof slide.id !== 'string') return false;
-  if (!slide.layout || typeof slide.layout !== 'string') return false;
-  if (!Array.isArray(slide.blocks)) return false;
-  
-  for (const block of slide.blocks) {
-    if (!block.type || typeof block.type !== 'string') return false;
-  }
-  
-  return true;
 }
