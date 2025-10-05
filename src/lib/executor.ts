@@ -225,99 +225,25 @@ export class PresentationExecutor {
     await this.delay(1000);
     
     try {
-      // Use the new AI slides pipeline to generate diverse content
-      const response = await fetch('/api/ai-slides', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topic: this.plan.title,
-          theme: 'nebula-dark',
-          audience: 'General audience',
-          tone: 'Professional'
-        }),
-      });
-
-      if (response.ok) {
-        const { deck } = await response.json();
-        
-        // Convert AI slides to the current slide format
-        const contentSlides: Slide[] = deck.slides.map((aiSlide: any, index: number) => {
-          const blocks: any[] = [];
-          
-          // Add title block
-          blocks.push({
-            id: `heading_${index + 3}`,
-            type: 'Heading',
-            text: aiSlide.title,
-            animation: 'slideInFromTop'
-          });
-          
-          // Add subtitle if present
-          if (aiSlide.subtitle) {
-            blocks.push({
-              id: `subheading_${index + 3}`,
-              type: 'Subheading',
-              text: aiSlide.subtitle,
-              animation: 'fadeIn'
-            });
-          }
-          
-          // Add bullets if present
-          if (aiSlide.bullets && aiSlide.bullets.length > 0) {
-            blocks.push({
-              id: `bullets_${index + 3}`,
-              type: 'Bullets',
-              items: aiSlide.bullets,
-              animation: 'staggerIn'
-            });
-          }
-          
-          // Add KPIs if present
-          if (aiSlide.kpis && aiSlide.kpis.length > 0) {
-            aiSlide.kpis.forEach((kpi: any, kpiIndex: number) => {
-              blocks.push({
-                id: `kpi_${index + 3}_${kpiIndex}`,
-                type: 'Markdown',
-                md: `**${kpi.label}:** ${kpi.value}${kpi.note ? ` (${kpi.note})` : ''}`,
-                animation: 'slideInFromLeft'
-              });
-            });
-          }
-          
-          // Add visual placeholder if present
-          if (aiSlide.visual && aiSlide.visual.keywords) {
-            blocks.push({
-              id: `visual_${index + 3}`,
-              type: 'Markdown',
-              md: `**Visual:** ${aiSlide.visual.keywords.join(', ')}`,
-              animation: 'fadeIn'
-            });
-          }
-          
-          return {
-            id: `slide_${index + 3}`,
-            layout: this.mapLayout(aiSlide.layout || aiSlide.kind),
-            animation: 'fadeIn',
-            blocks,
-            notes: aiSlide.speakerNotes || `Speaker notes for ${aiSlide.title}`
-          };
-        });
-        
-        // Update state with generated content slides
-        this.state.deck.slides = [...(this.state.deck.slides || []), ...contentSlides];
-        this.addLog('success', 'step_4', `Generated ${contentSlides.length} diverse content slides using AI pipeline`);
-        
-        return true;
-      } else {
-        const errorText = await response.text();
-        throw new Error(`AI slides API call failed: ${response.status} - ${errorText}`);
-      }
-    } catch (error) {
-      console.error('Error generating AI slides:', error);
+      // Use the rich slide generator to create content-rich slides
+      const { RichSlideGenerator } = await import('./rich-slide-generator');
+      const generator = new RichSlideGenerator();
       
-      // Fallback to enhanced content generation
+      const contentSlides = await generator.generateRichSlides(
+        this.plan.title,
+        this.plan.overview,
+        'DeepSpace'
+      );
+      
+      // Update state with generated content slides
+      this.state.deck.slides = [...(this.state.deck.slides || []), ...contentSlides];
+      this.addLog('success', 'step_4', `Generated ${contentSlides.length} rich content slides with detailed information`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error generating rich slides:', error);
+      
+      // Enhanced fallback with rich content
       const contentSlides: Slide[] = [];
       const contentStepCount = this.plan.totalSlides - 4;
       

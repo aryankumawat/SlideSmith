@@ -118,14 +118,36 @@ OUTPUT (JSON only):
   private parseJSONResponse(response: string): any {
     try {
       // Clean the response to extract JSON
-      const jsonMatch = response.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+      let cleanedResponse = response.trim();
+      
+      // Remove any text before the first [ or {
+      const jsonStart = cleanedResponse.search(/[\[\{]/);
+      if (jsonStart > 0) {
+        cleanedResponse = cleanedResponse.substring(jsonStart);
       }
-      throw new Error('No JSON found in response');
+      
+      // Remove any text after the last ] or }
+      const jsonEnd = cleanedResponse.lastIndexOf(/[\]\}]/);
+      if (jsonEnd > 0 && jsonEnd < cleanedResponse.length - 1) {
+        cleanedResponse = cleanedResponse.substring(0, jsonEnd + 1);
+      }
+      
+      // Try to parse the cleaned response
+      return JSON.parse(cleanedResponse);
     } catch (error) {
       console.error('Error parsing JSON response:', error);
       console.error('Response:', response);
+      
+      // Fallback: try to extract just the array part
+      try {
+        const arrayMatch = response.match(/\[[\s\S]*\]/);
+        if (arrayMatch) {
+          return JSON.parse(arrayMatch[0]);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback parsing also failed:', fallbackError);
+      }
+      
       throw new Error('Failed to parse LLM response as JSON');
     }
   }
