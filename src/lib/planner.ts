@@ -48,7 +48,7 @@ export class PresentationPlanner {
       const response = await this.llm.generateContent(prompt);
       
       // Clean the response and try to parse as JSON
-      const cleanedResponse = response.replace(/[\x00-\x1F\x7F]/g, '');
+      const cleanedResponse = response.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
       const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
