@@ -55,23 +55,12 @@ export class LLMClient {
   }
 
   private async callOpenAI(prompt: string, apiKey: string, baseUrl: string, model: string): Promise<LLMResponse> {
-    // Check if this is OpenRouter API
-    const isOpenRouter = baseUrl.includes('openrouter.ai');
-    
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    };
-
-    // Add OpenRouter specific headers
-    if (isOpenRouter) {
-      headers['HTTP-Referer'] = 'http://localhost:3000';
-      headers['X-Title'] = 'SlideSmith';
-    }
-
-    const response = await fetch(`${baseUrl}/chat/completions`, {
+    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
-      headers,
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         model,
         messages: [
@@ -86,9 +75,7 @@ export class LLMClient {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API Error Response:', errorText);
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -247,11 +234,8 @@ export function createLLMClient(): LLMClient {
   const baseUrl = process.env.LLM_BASE_URL || (provider === 'openai' ? 'https://api.openai.com' : 'http://localhost:11434');
   const model = process.env.LLM_MODEL || (provider === 'openai' ? 'gpt-4' : 'llama2');
 
-  console.log('LLM Client Configuration:', { provider, hasApiKey: !!apiKey, baseUrl, model });
-
-  // Force demo mode if no valid API key or if provider is demo
-  if (provider === 'demo' || !apiKey || apiKey === 'your_openai_api_key_here' || apiKey === 'your_actual_openai_api_key_here') {
-    console.log('Using demo mode for LLM client');
+  if (!apiKey && provider === 'openai') {
+    console.warn('No OpenAI API key found. Using demo mode instead.');
     return new LLMClient({
       provider: 'demo',
       apiKey: '',
