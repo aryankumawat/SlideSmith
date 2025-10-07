@@ -66,3 +66,4 @@ function Map({ widget, theme }: MapProps) {
 }
 
 export { Map };
+

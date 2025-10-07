@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return new NextResponse(pptxBuffer as any, {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'Content-Disposition': `attachment; filename="${deck.meta.title.replace(/[^a-zA-Z0-9]/g, '_')}.pptx"`,
+        'Content-Disposition': `attachment; filename="${deck.title.replace(/[^a-zA-Z0-9]/g, '_')}.pptx"`,
       },
     });
   } catch (error) {
@@ -42,7 +42,7 @@ async function generatePPTX(deck: Deck): Promise<Buffer> {
     const pptxSlide = pptx.addSlide();
     
     // Set slide background based on theme
-    const themeColors = getThemeColors(deck.meta.theme);
+    const themeColors = getThemeColors(deck.theme || 'professional');
     pptxSlide.background = { color: themeColors.background };
     
     // Add slide content

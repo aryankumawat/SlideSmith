@@ -4,6 +4,7 @@ import { generateOutline } from '@/lib/outline';
 import { generateSlide, createTitleSlide, createAgendaSlide, createConclusionSlide, createThankYouSlide } from '@/lib/slidewriter';
 import { checkRateLimit } from '@/lib/llm';
 import { PresentationPlanner } from '@/lib/planner';
+import { RichSlideGenerator } from '@/lib/rich-slide-generator';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,45 +53,81 @@ export async function POST(request: NextRequest) {
     // Add agenda slide
     slides.push(createAgendaSlide(outline.agenda));
     
-    // Generate content slides
-    let slideIndex = 2; // Start after title and agenda
-    const totalSlides = outline.agenda.reduce((sum, item) => sum + item.slideCount, 0) + 4; // +4 for title, agenda, conclusion, thank you
-    
-    for (const section of outline.agenda) {
-      for (let i = 0; i < section.slideCount; i++) {
-        try {
-          const slide = await generateSlide(
-            section,
-            slideIndex,
-            totalSlides,
-            theme || 'DeepSpace',
-            enableLive || false
-          );
-          slides.push(slide);
-          slideIndex++;
-        } catch (error) {
-          console.error(`Error generating slide ${slideIndex}:`, error);
-          // Add fallback slide
-          slides.push({
-            id: `slide-${Date.now()}-${slideIndex}`,
-            layout: 'title+bullets',
-            blocks: [
-              {
-                type: 'Heading',
-                text: section.title,
-              },
-              {
-                type: 'Subheading',
-                text: section.objective,
-              },
-              {
-                type: 'Bullets',
-                items: section.keyPoints.slice(0, 6),
-              },
-            ],
-            notes: `Speaker notes for ${section.title}: ${section.objective}`,
-          });
-          slideIndex++;
+    // Generate rich content slides using the new generator
+    try {
+      console.log('Generating rich content slides...');
+      const richGenerator = new RichSlideGenerator();
+      const contentSlides = await richGenerator.generateRichSlides(
+        outline.title,
+        detail || '',
+        theme || 'DeepSpace'
+      );
+      
+      // Add content slides (skip title slide if present)
+      const slidesToAdd = contentSlides.length > 1 ? contentSlides.slice(1) : contentSlides;
+      slides.push(...slidesToAdd);
+      
+      console.log(`Successfully generated ${slidesToAdd.length} rich content slides`);
+    } catch (error) {
+      console.error('Error generating rich slides, using fallback:', error);
+      
+      // Fallback to original method with enhanced content
+      let slideIndex = 2; // Start after title and agenda
+      const totalSlides = outline.agenda.reduce((sum, item) => sum + item.slideCount, 0) + 4;
+      
+      for (const section of outline.agenda) {
+        for (let i = 0; i < section.slideCount; i++) {
+          try {
+            console.log(`Generating slide ${slideIndex} for section: ${section.title}`);
+            const slide = await generateSlide(
+              section,
+              slideIndex,
+              totalSlides,
+              theme || 'DeepSpace',
+              enableLive || false
+            );
+            console.log(`Successfully generated slide ${slideIndex}:`, slide.id);
+            slides.push(slide);
+            slideIndex++;
+          } catch (error) {
+            console.error(`Error generating slide ${slideIndex}:`, error);
+            // Add enhanced fallback slide with rich content
+            slides.push({
+              id: `slide-${Date.now()}-${slideIndex}-${Math.random().toString(36).substr(2, 9)}`,
+              layout: 'title+bullets',
+              animation: 'fadeIn',
+              blocks: [
+                {
+                  type: 'Heading',
+                  text: section.title,
+                  animation: 'slideInFromTop'
+                },
+                {
+                  type: 'Subheading',
+                  text: section.objective,
+                  animation: 'fadeIn'
+                },
+                {
+                  type: 'Markdown',
+                  md: `**Key Focus:** ${section.objective}\n\nThis section explores the essential aspects of ${section.title.toLowerCase()} and provides actionable insights for implementation.`,
+                  animation: 'slideInFromLeft'
+                },
+                {
+                  type: 'Bullets',
+                  items: section.keyPoints.slice(0, 5).map(point => `• ${point}`),
+                  animation: 'staggerIn'
+                },
+                {
+                  type: 'Quote',
+                  text: `"Understanding ${section.title.toLowerCase()} is crucial for success in today's dynamic environment."`,
+                  author: 'Industry Expert',
+                  animation: 'fadeIn'
+                }
+              ],
+              notes: `Speaker Notes for ${section.title}:\n\nKey Talking Points:\n• ${section.objective}\n• ${section.keyPoints.slice(0, 3).join('\n• ')}\n\nEngagement Tips:\n- Start with a compelling statistic or story\n- Use specific examples and case studies\n- Encourage audience interaction with questions\n- Provide actionable takeaways\n- Connect to real-world applications`,
+            });
+            slideIndex++;
+          }
         }
       }
     }

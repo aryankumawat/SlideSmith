@@ -2,6 +2,12 @@ import { Outline, OutlineItem } from './schema';
 
 export type LLMProvider = 'openai' | 'ollama' | 'demo';
 
+// Helper to clean JSON responses from LLMs
+export function cleanJSONResponse(jsonString: string): string {
+  // Remove control characters (0x00-0x08, 0x0B-0x1F, 0x7F)
+  return jsonString.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
 export interface LLMConfig {
   provider: LLMProvider;
   apiKey: string;
@@ -55,110 +61,61 @@ export class LLMClient {
   }
 
   private async callOpenAI(prompt: string, apiKey: string, baseUrl: string, model: string): Promise<LLMResponse> {
-    // Check if this is OpenRouter API
-    const isOpenRouter = baseUrl.includes('openrouter.ai');
-    
-    const headers: Record<string, string> = {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      content: data.choices[0].message.content,
+      usage: data.usage,
     };
-
-    // Add OpenRouter specific headers
-    if (isOpenRouter) {
-      headers['HTTP-Referer'] = 'http://localhost:3000';
-      headers['X-Title'] = 'SlideSmith';
-    }
-
-    try {
-      // Create AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
-      const response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-          temperature: 0.7,
-          max_tokens: 4000,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        console.error('Invalid API response structure:', data);
-        throw new Error('Invalid API response structure');
-      }
-
-      return {
-        content: data.choices[0].message.content,
-        usage: data.usage,
-      };
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.error('Request timeout after 30 seconds');
-        throw new Error('Request timeout - please try again');
-      }
-      console.error('Network/API Error:', error);
-      throw error;
-    }
   }
 
   private async callOllama(prompt: string, baseUrl: string, model: string): Promise<LLMResponse> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    try {
-      const response = await fetch(`${baseUrl}/api/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    const response = await fetch(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        prompt,
+        stream: false,
+        options: {
+          temperature: 0.7,
+          num_predict: 4000,
         },
-        body: JSON.stringify({
-          model,
-          prompt,
-          stream: false,
-          options: {
-            temperature: 0.7,
-            num_predict: 4000,
-          },
-        }),
-        signal: controller.signal,
-      });
+      }),
+    });
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return {
-        content: data.response,
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout - please try again');
-      }
-      throw error;
+    if (!response.ok) {
+      throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
     }
+
+    const data = await response.json();
+    return {
+      content: data.response,
+    };
   }
 
   private async callDemo(prompt: string): Promise<LLMResponse> {
@@ -197,33 +154,16 @@ export class LLMClient {
       };
     }
     
-    // Default demo response for slide generation
+    // Default demo response
     return {
-      content: JSON.stringify({
-        id: `slide-${Date.now()}`,
-        layout: 'title+bullets',
-        blocks: [
-          {
-            type: 'Heading',
-            text: 'Demo Slide Title',
-          },
-          {
-            type: 'Bullets',
-            items: ['Demo point 1', 'Demo point 2', 'Demo point 3', 'Demo point 4', 'Demo point 5'],
-          },
-        ],
-        notes: 'This is a demo slide. Configure your API keys for real AI generation.',
-      })
+      content: 'This is a demo response. To use real AI generation, please configure your API keys in the .env.local file.'
     };
   }
 
   private parseOutline(content: string): Outline {
     try {
-      // Clean the content - remove any control characters that might cause JSON parsing issues
-      const cleanedContent = content.replace(/[\x00-\x1F\x7F]/g, '');
-      
       // Try to extract JSON from the response
-      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         return parsed;
@@ -258,18 +198,14 @@ export class LLMClient {
       };
     } catch (error) {
       console.error('Error parsing outline:', error);
-      console.error('Content that failed to parse:', content);
       throw new Error('Failed to parse outline from LLM response');
     }
   }
 
   private parseSlide(content: string): any {
     try {
-      // Clean the content - remove any control characters that might cause JSON parsing issues
-      const cleanedContent = content.replace(/[\x00-\x1F\x7F]/g, '');
-      
       // Try to extract JSON from the response
-      const jsonMatch = cleanedContent.match(/\{[\s\S]*\}/);
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         return JSON.parse(jsonMatch[0]);
       }
@@ -292,7 +228,6 @@ export class LLMClient {
       };
     } catch (error) {
       console.error('Error parsing slide:', error);
-      console.error('Content that failed to parse:', content);
       throw new Error('Failed to parse slide from LLM response');
     }
   }

@@ -830,3 +830,4 @@ export function getThemeClasses(theme: Theme): string {
 
   return classes.join(' ');
 }
+

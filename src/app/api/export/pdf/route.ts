@@ -76,7 +76,7 @@ stream
 BT
 /F1 12 Tf
 100 700 Td
-(${deck.meta.title}) Tj
+(${deck.title}) Tj
 ET
 endstream
 endobj
