@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       const plan = await planner.generatePlan({
         topic,
         detail: detail || '',
-        tone,
+        tone: tone || 'Professional',
         audience,
         length,
         theme,
