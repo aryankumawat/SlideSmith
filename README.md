@@ -321,5 +321,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Plugin system
 
 ---
-
-Built with ❤️ using Next.js, TypeScript, and AI.
