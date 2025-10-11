@@ -81,7 +81,10 @@ async function testMultiAgentAPI() {
             if (result.deck.slides) {
               console.log('\n📝 Slide Overview:');
               result.deck.slides.forEach((slide, index) => {
-                console.log(`   ${index + 1}. ${slide.title || 'Untitled'}`);
+                // Extract title from the first Heading block
+                const titleBlock = slide.blocks?.find(block => block.type === 'Heading');
+                const title = titleBlock?.text || 'Untitled';
+                console.log(`   ${index + 1}. ${title}`);
               });
             }
           }

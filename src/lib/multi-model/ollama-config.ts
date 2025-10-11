@@ -52,7 +52,8 @@ export const AGENT_MODEL_ASSIGNMENTS: Record<string, string> = {
   'audience-adapter': 'gemma3-4b',
   'data-viz-planner': 'gemma3-4b',
   'media-finder': 'gemma3-4b',
-  'live-widget-planner': 'gemma3-4b'
+  'live-widget-planner': 'gemma3-4b',
+  'readability-analyzer': 'gemma3-4b'
 };
 
 // Quality-based routing policies
@@ -68,7 +69,8 @@ export const QUALITY_POLICY = {
   'accessibility-linter': 'phi4',
   'live-widget-planner': 'phi4',
   'executive-summary': 'phi4',
-  'audience-adapter': 'phi4'
+  'audience-adapter': 'phi4',
+  'readability-analyzer': 'phi4'
 };
 
 export const SPEED_POLICY = {
@@ -83,22 +85,24 @@ export const SPEED_POLICY = {
   'accessibility-linter': 'gemma3-4b',
   'live-widget-planner': 'gemma3-4b',
   'executive-summary': 'gemma3-4b',
-  'audience-adapter': 'gemma3-4b'
+  'audience-adapter': 'gemma3-4b',
+  'readability-analyzer': 'gemma3-4b'
 };
 
 export const BALANCED_POLICY = {
-  'researcher': 'phi4',
-  'structurer': 'phi4',
-  'slidewriter': 'gemma3-4b',
-  'copy-tightener': 'gemma3-4b',
-  'fact-checker': 'phi4',
-  'data-viz-planner': 'gemma3-4b',
-  'media-finder': 'gemma3-4b',
-  'speaker-notes-generator': 'gemma3-4b',
-  'accessibility-linter': 'gemma3-4b',
-  'live-widget-planner': 'gemma3-4b',
-  'executive-summary': 'gemma3-4b',
-  'audience-adapter': 'gemma3-4b'
+  'researcher': 'phi4',           // High quality for research
+  'structurer': 'gemma3-4b',      // Fast for structure (was timing out)
+  'slidewriter': 'gemma3-4b',     // Fast for content generation
+  'copy-tightener': 'gemma3-4b',  // Fast for editing
+  'fact-checker': 'gemma3-4b',    // Fast for fact checking
+  'data-viz-planner': 'gemma3-4b', // Fast for simple tasks
+  'media-finder': 'gemma3-4b',    // Fast for simple tasks
+  'speaker-notes-generator': 'gemma3-4b', // Fast for simple tasks
+  'accessibility-linter': 'gemma3-4b',    // Fast for simple tasks
+  'live-widget-planner': 'gemma3-4b',     // Fast for simple tasks
+  'executive-summary': 'gemma3-4b',       // Fast for simple tasks
+  'audience-adapter': 'gemma3-4b',        // Fast for simple tasks
+  'readability-analyzer': 'gemma3-4b'     // Fast for simple tasks
 };
 
 export function getModelForAgent(agentName: string, policy: string = 'balanced'): ModelConfig {

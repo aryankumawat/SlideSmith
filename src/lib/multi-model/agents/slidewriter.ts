@@ -139,7 +139,7 @@ export class SlidewriterAgent extends BaseAgent {
     const prompt = this.buildSlidePrompt(section, snippets, context, wordBudgets, slideNumber, totalSlides);
     
     const response = await this.callLLM(prompt);
-    const slideData = JSON.parse(response);
+    const slideData = JSON.parse(response.content);
 
     // Convert to proper Slide format
     const slide: Slide = {

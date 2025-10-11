@@ -32,7 +32,7 @@ export class StructurerAgent extends BaseAgent {
       description: 'Converts topic + research into a compelling deck plan',
       capabilities: ['outline-generation', 'audience-analysis', 'narrative-structure'],
       maxRetries: 3,
-      timeout: 20000,
+      timeout: 60000, // Increased to 60 seconds
     };
     super(config);
   }
@@ -148,7 +148,7 @@ Return as JSON:
 }`;
 
     const response = await this.callLLM(prompt);
-    return JSON.parse(response);
+    return JSON.parse(response.content);
   }
 
   private async createOutlineSections(
@@ -210,7 +210,7 @@ Return as JSON:
 }`;
 
     const response = await this.callLLM(prompt);
-    const sectionData = JSON.parse(response);
+    const sectionData = JSON.parse(response.content);
 
     return {
       id: `section-${index + 1}`,

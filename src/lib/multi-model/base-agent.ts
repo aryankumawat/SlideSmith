@@ -51,24 +51,41 @@ export abstract class BaseAgent {
       ...options,
     };
 
-    const response = await fetch(`${baseUrl}/v1/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
+    // Add timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-    if (!response.ok) {
-      throw new Error(`LLM API error: ${response.status} ${response.statusText}`);
+    try {
+      const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`LLM API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return {
+        content: data.choices[0].message.content,
+        usage: data.usage,
+      };
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        throw new Error(`Request timeout after ${this.config.timeout}ms`);
+      }
+      
+      throw error;
     }
-
-    const data = await response.json();
-    return {
-      content: data.choices[0].message.content,
-      usage: data.usage,
-    };
   }
 
   protected parseResponse(response: { content: string; usage?: unknown }): string {
@@ -95,7 +112,23 @@ export abstract class BaseAgent {
 
   protected handleError(error: unknown, context?: unknown): never {
     console.error(`Agent ${this.config.name} failed:`, error);
-    throw new Error(`${this.config.name} execution failed: ${error.message}`);
+    
+    // Provide more specific error messages based on error type
+    let errorMessage = 'Unknown error';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('fetch failed')) {
+        errorMessage = 'Network connection failed - check if Ollama is running';
+      } else if (error.message.includes('JSON')) {
+        errorMessage = 'Invalid response format from LLM';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Request timed out - try again with a faster model';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    throw new Error(`${this.config.name} execution failed: ${errorMessage}`);
   }
 
   protected async retry<T>(

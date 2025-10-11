@@ -281,7 +281,7 @@ Return as JSON:
 
     try {
       const response = await this.callLLM(prompt);
-      const result = JSON.parse(response);
+      const result = JSON.parse(response.content);
       return Math.max(0, Math.min(1, result.supportScore || 0));
     } catch (error) {
       console.warn('Support score calculation failed:', error);

@@ -155,7 +155,7 @@ Return as JSON:
 
     try {
       const response = await this.callLLM(prompt);
-      const result = JSON.parse(response);
+      const result = JSON.parse(response.content);
       
       if (result.tightened && result.tightened !== text && result.wordCount <= 8) {
         return {
@@ -203,7 +203,7 @@ Return as JSON:
 
     try {
       const response = await this.callLLM(prompt);
-      const result = JSON.parse(response);
+      const result = JSON.parse(response.content);
       
       if (result.tightened && result.tightened !== text && result.wordCount <= 15) {
         return {
@@ -251,7 +251,7 @@ Return as JSON:
 
     try {
       const response = await this.callLLM(prompt);
-      const result = JSON.parse(response);
+      const result = JSON.parse(response.content);
       
       if (result.tightened && Array.isArray(result.tightened)) {
         // Validate that all bullets are under 12 words

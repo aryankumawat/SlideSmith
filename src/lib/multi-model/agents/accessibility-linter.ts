@@ -1,25 +1,19 @@
-import { BaseAgent } from '../base-agent';
+import { BaseAgent, AgentConfig } from '../base-agent';
 import { AccessibilityInput, AccessibilityOutput, AccessibilityIssue, AccessibilityFix } from '../schemas';
 
-export interface AccessibilityLinterConfig {
-  name: string;
-  description: string;
-  model: {
-    provider: 'ollama' | 'openai' | 'demo';
-    apiKey: string;
-    baseUrl: string;
-    model: string;
-    maxTokens: number;
-    temperature: number;
-  };
-}
-
 export class AccessibilityLinterAgent extends BaseAgent {
-  constructor(config: AccessibilityLinterConfig) {
+  constructor() {
+    const config: AgentConfig = {
+      name: 'accessibility-linter',
+      description: 'Identifies accessibility and design anti-patterns in a slide deck based on WCAG principles and best practices',
+      capabilities: ['accessibility-audit', 'design-review', 'wcag-compliance'],
+      maxRetries: 3,
+      timeout: 30000,
+    };
     super(config);
   }
 
-  async execute(input: AccessibilityInput): Promise<AccessibilityOutput> {
+  async execute(input: AccessibilityInput, context?: unknown): Promise<AccessibilityOutput> {
     try {
       console.log(`[${this.config.name}] Starting accessibility audit...`);
       

@@ -201,62 +201,67 @@ export class MultiModelOrchestrator {
     const checks: QualityCheck[] = [];
     const scores: any = {};
 
-    // Copy Tightening
-    try {
-      const copyResult = await this.executeAgent('copy-tightener', {
+    // Run quality checks in parallel for better performance
+    const qualityPromises = [
+      // Copy Tightening (needs to run first as it modifies slides)
+      this.executeAgent('copy-tightener', {
         slides,
         audience: input.audience,
         tone: input.tone,
-      }, input.policy);
-      
-      // Update slides with tightened content
-      Object.assign(slides, copyResult.slides);
-      scores.consistency = copyResult.qualityScore || 0.8;
-    } catch (error) {
-      console.warn('[Orchestrator] Copy tightening failed:', error);
-      scores.consistency = 0.5;
-    }
+      }, input.policy).then(result => {
+        // Update slides with tightened content
+        Object.assign(slides, result.slides);
+        return { type: 'copy', result, score: result.qualityScore || 0.8 };
+      }).catch(error => {
+        console.warn('[Orchestrator] Copy tightening failed:', error);
+        return { type: 'copy', result: null, score: 0.5 };
+      }),
 
-    // Fact Checking
-    try {
-      const factCheckResult = await this.executeAgent('fact-checker', {
+      // Fact Checking (can run in parallel)
+      this.executeAgent('fact-checker', {
         slides,
         researchSnippets: snippets,
-      }, input.policy);
-      
-      checks.push(...factCheckResult.checks);
-      scores.factCheck = factCheckResult.overallScore || 0.8;
-    } catch (error) {
-      console.warn('[Orchestrator] Fact checking failed:', error);
-      scores.factCheck = 0.5;
-    }
+      }, input.policy).then(result => {
+        return { type: 'fact', result, score: result.overallScore || 0.8 };
+      }).catch(error => {
+        console.warn('[Orchestrator] Fact checking failed:', error);
+        return { type: 'fact', result: null, score: 0.5 };
+      }),
 
-    // Accessibility & Design Linting
-    try {
-      const a11yResult = await this.executeAgent('accessibility-linter', {
+      // Accessibility & Design Linting (can run in parallel)
+      this.executeAgent('accessibility-linter', {
         slides,
         theme: input.theme || 'professional',
-      }, input.policy);
-      
-      checks.push(...a11yResult.checks);
-      scores.accessibility = a11yResult.overallScore || 0.8;
-    } catch (error) {
-      console.warn('[Orchestrator] Accessibility checking failed:', error);
-      scores.accessibility = 0.5;
-    }
+      }, input.policy).then(result => {
+        return { type: 'accessibility', result, score: result.overallScore || 0.8 };
+      }).catch(error => {
+        console.warn('[Orchestrator] Accessibility checking failed:', error);
+        return { type: 'accessibility', result: null, score: 0.5 };
+      }),
 
-    // Readability Analysis
-    try {
-      const readabilityResult = await this.executeAgent('readability-analyzer', {
+      // Readability Analysis (can run in parallel)
+      this.executeAgent('readability-analyzer', {
         slides,
         audience: input.audience,
-      }, input.policy);
+      }, input.policy).then(result => {
+        return { type: 'readability', result, score: result.overallScore || 0.8 };
+      }).catch(error => {
+        console.warn('[Orchestrator] Readability analysis failed:', error);
+        return { type: 'readability', result: null, score: 0.5 };
+      })
+    ];
+
+    // Wait for all quality checks to complete
+    const results = await Promise.all(qualityPromises);
+
+    // Process results
+    results.forEach(({ type, result, score }) => {
+      scores[type] = score;
       
-      scores.readability = readabilityResult.overallScore || 0.8;
-    } catch (error) {
-      console.warn('[Orchestrator] Readability analysis failed:', error);
-      scores.readability = 0.5;
-    }
+      if (result && result.checks) {
+        checks.push(...result.checks);
+      }
+    });
 
     return { checks, scores };
   }
@@ -544,12 +549,17 @@ export class MultiModelOrchestrator {
       executiveSummary.setRouter(this.router);
       this.agents.set('executive-summary', executiveSummary);
 
-      const { AudienceAdapterAgent } = await import('./agents/audience-adapter');
-      const audienceAdapter = new AudienceAdapterAgent();
-      audienceAdapter.setRouter(this.router);
-      this.agents.set('audience-adapter', audienceAdapter);
+          const { AudienceAdapterAgent } = await import('./agents/audience-adapter');
+          const audienceAdapter = new AudienceAdapterAgent();
+          audienceAdapter.setRouter(this.router);
+          this.agents.set('audience-adapter', audienceAdapter);
 
-      console.log(`[Orchestrator] Initialized ${this.agents.size} agents`);
+          const { ReadabilityAnalyzerAgent } = await import('./agents/readability-analyzer');
+          const readabilityAnalyzer = new ReadabilityAnalyzerAgent();
+          readabilityAnalyzer.setRouter(this.router);
+          this.agents.set('readability-analyzer', readabilityAnalyzer);
+
+          console.log(`[Orchestrator] Initialized ${this.agents.size} agents`);
       this.isInitialized = true;
     } catch (error) {
       console.error('[Orchestrator] Failed to initialize agents:', error);

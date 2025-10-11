@@ -102,7 +102,7 @@ Return as a JSON array of strings. Each subtopic should be:
 Example: ["market trends", "key challenges", "success factors", "future outlook"]`;
 
     const response = await this.callLLM(prompt);
-    const subtopics = JSON.parse(response);
+    const subtopics = JSON.parse(response.content);
     return Array.isArray(subtopics) ? subtopics : [topic];
   }
 
@@ -156,10 +156,12 @@ Return as JSON array:
 
     try {
       const response = await this.callLLM(prompt);
-      const results = JSON.parse(response);
+      console.log(`[researcher] Raw response for query "${query}":`, response.content.substring(0, 200) + '...');
+      const results = JSON.parse(response.content);
       return Array.isArray(results) ? results : [];
     } catch (error) {
       console.warn(`Search failed for query: ${query}`, error);
+      console.warn(`Response content:`, response?.content?.substring(0, 200) + '...');
       return [];
     }
   }
