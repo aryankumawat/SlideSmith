@@ -271,3 +271,247 @@ export const AudienceAdaptationSchema = z.object({
 });
 
 export type AudienceAdaptation = z.infer<typeof AudienceAdaptationSchema>;
+
+// ============================================================================
+// NEW AGENT SCHEMAS
+// ============================================================================
+
+// Data Visualization Schemas
+export const ChartSpecSchema = z.object({
+  kind: z.enum(['line', 'bar', 'area', 'pie', 'scatter', 'histogram']),
+  x: z.string(),
+  y: z.string(),
+  title: z.string(),
+  rationale: z.string(),
+  dataExample: z.any().optional(),
+});
+
+export const DataVizInputSchema = z.object({
+  analyticalQuestion: z.string(),
+  dataSchema: z.record(z.any()),
+  sampleData: z.array(z.any()),
+  slideContext: z.string(),
+});
+
+export const DataVizOutputSchema = z.object({
+  chartSpecs: z.array(ChartSpecSchema),
+  rationale: z.string(),
+  metadata: z.object({
+    totalCharts: z.number(),
+    dataTypes: z.array(z.string()),
+    complexity: z.enum(['simple', 'moderate', 'complex']),
+  }),
+});
+
+export type ChartSpec = z.infer<typeof ChartSpecSchema>;
+export type DataVizInput = z.infer<typeof DataVizInputSchema>;
+export type DataVizOutput = z.infer<typeof DataVizOutputSchema>;
+
+// Media Finder Schemas
+export const MediaSuggestionSchema = z.object({
+  type: z.enum(['image', 'video', 'diagram', 'icon', 'illustration']),
+  url: z.string().optional(),
+  prompt: z.string().optional(),
+  altText: z.string(),
+  credit: z.string().optional(),
+  relevance: z.number().min(1).max(10),
+  description: z.string(),
+});
+
+export const MediaFinderInputSchema = z.object({
+  sectionContext: z.string(),
+  keywords: z.array(z.string()),
+  themeStyle: z.string(),
+  contentType: z.string(),
+});
+
+export const MediaFinderOutputSchema = z.object({
+  suggestions: z.array(MediaSuggestionSchema),
+  metadata: z.object({
+    totalSuggestions: z.number(),
+    imageCount: z.number(),
+    videoCount: z.number(),
+    diagramCount: z.number(),
+  }),
+});
+
+export type MediaSuggestion = z.infer<typeof MediaSuggestionSchema>;
+export type MediaFinderInput = z.infer<typeof MediaFinderInputSchema>;
+export type MediaFinderOutput = z.infer<typeof MediaFinderOutputSchema>;
+
+// Speaker Notes Schemas
+export const SpeakerNoteSchema = z.object({
+  slideId: z.string(),
+  notes: z.string(),
+  duration: z.string(),
+  keyPoints: z.array(z.string()),
+  transitions: z.array(z.string()),
+  audienceEngagement: z.array(z.string()),
+  timing: z.string(),
+});
+
+export const SpeakerNotesInputSchema = z.object({
+  slides: z.array(z.any()),
+  audience: z.string(),
+  tone: z.string(),
+  estimatedDuration: z.number(),
+  purpose: z.string(),
+});
+
+export const SpeakerNotesOutputSchema = z.object({
+  notes: z.array(SpeakerNoteSchema),
+  metadata: z.object({
+    totalSlides: z.number(),
+    averageDuration: z.number(),
+    totalDuration: z.number(),
+  }),
+});
+
+export type SpeakerNote = z.infer<typeof SpeakerNoteSchema>;
+export type SpeakerNotesInput = z.infer<typeof SpeakerNotesInputSchema>;
+export type SpeakerNotesOutput = z.infer<typeof SpeakerNotesOutputSchema>;
+
+// Accessibility Schemas
+export const AccessibilityIssueSchema = z.object({
+  type: z.enum(['contrast', 'typography', 'structure', 'content', 'navigation']),
+  severity: z.enum(['critical', 'warning', 'info']),
+  slideId: z.string(),
+  element: z.string(),
+  description: z.string(),
+  impact: z.string(),
+  wcagLevel: z.enum(['AA', 'AAA']),
+});
+
+export const AccessibilityFixSchema = z.object({
+  issueId: z.string(),
+  description: z.string(),
+  autoFixable: z.boolean(),
+  priority: z.enum(['high', 'medium', 'low']),
+  effort: z.enum(['quick', 'moderate', 'extensive']),
+  code: z.string().optional(),
+  explanation: z.string(),
+});
+
+export const AccessibilityInputSchema = z.object({
+  deck: z.any(),
+  theme: z.string(),
+  themeTokens: z.object({
+    colors: z.record(z.string()),
+    typography: z.record(z.any()),
+    spacing: z.record(z.any()),
+  }),
+});
+
+export const AccessibilityOutputSchema = z.object({
+  issues: z.array(AccessibilityIssueSchema),
+  fixes: z.array(AccessibilityFixSchema),
+  metadata: z.object({
+    totalIssues: z.number(),
+    criticalIssues: z.number(),
+    warningIssues: z.number(),
+    infoIssues: z.number(),
+    autoFixable: z.number(),
+  }),
+});
+
+export type AccessibilityIssue = z.infer<typeof AccessibilityIssueSchema>;
+export type AccessibilityFix = z.infer<typeof AccessibilityFixSchema>;
+export type AccessibilityInput = z.infer<typeof AccessibilityInputSchema>;
+export type AccessibilityOutput = z.infer<typeof AccessibilityOutputSchema>;
+
+// Live Widget Schemas
+export const WidgetSpecSchema = z.object({
+  type: z.enum(['chart', 'ticker', 'map', 'countdown', 'iframe']),
+  config: z.record(z.any()),
+  dataSource: z.string().optional(),
+  refreshRate: z.number(),
+});
+
+export const WidgetRecommendationSchema = z.object({
+  slideIndex: z.number(),
+  widgetSpec: WidgetSpecSchema,
+  explanation: z.string(),
+  refreshRate: z.number(),
+  priority: z.enum(['high', 'medium', 'low']),
+  audienceEngagement: z.string(),
+});
+
+export const LiveWidgetInputSchema = z.object({
+  topic: z.string(),
+  audience: z.string(),
+  tone: z.string(),
+  duration: z.number(),
+  mode: z.string(),
+  outline: z.array(z.object({
+    title: z.string(),
+    description: z.string(),
+  })),
+  safeEndpoints: z.array(z.object({
+    name: z.string(),
+    url: z.string(),
+  })),
+});
+
+export const LiveWidgetOutputSchema = z.object({
+  recommendations: z.array(WidgetRecommendationSchema),
+  metadata: z.object({
+    totalRecommendations: z.number(),
+    chartWidgets: z.number(),
+    tickerWidgets: z.number(),
+    mapWidgets: z.number(),
+    countdownWidgets: z.number(),
+    iframeWidgets: z.number(),
+  }),
+});
+
+export type WidgetSpec = z.infer<typeof WidgetSpecSchema>;
+export type WidgetRecommendation = z.infer<typeof WidgetRecommendationSchema>;
+export type LiveWidgetInput = z.infer<typeof LiveWidgetInputSchema>;
+export type LiveWidgetOutput = z.infer<typeof LiveWidgetOutputSchema>;
+
+// Executive Summary Schemas (Updated)
+export const ExecutiveSummaryInputSchema = z.object({
+  deck: z.any(),
+  audience: z.string(),
+  tone: z.string(),
+});
+
+export const ExecutiveSummaryOutputSchema = z.object({
+  summarySlide: z.any(),
+  emailSummary: z.string(),
+  metadata: z.object({
+    keyPoints: z.array(z.string()),
+    totalSlides: z.number(),
+    estimatedReadTime: z.number(),
+  }),
+});
+
+export type ExecutiveSummaryInput = z.infer<typeof ExecutiveSummaryInputSchema>;
+export type ExecutiveSummaryOutput = z.infer<typeof ExecutiveSummaryOutputSchema>;
+
+// Audience Adapter Schemas (Updated)
+export const AudienceAdapterInputSchema = z.object({
+  deck: z.any(),
+  originalAudience: z.string(),
+  targetAudience: z.string(),
+  originalTone: z.string(),
+  targetTone: z.string(),
+  originalDuration: z.number(),
+  targetDuration: z.number(),
+});
+
+export const AudienceAdapterOutputSchema = z.object({
+  adaptedDeck: z.any(),
+  changeLog: z.array(z.string()),
+  metadata: z.object({
+    originalSlides: z.number(),
+    adaptedSlides: z.number(),
+    slidesRemoved: z.number(),
+    slidesAdded: z.number(),
+    toneChanged: z.boolean(),
+    durationChanged: z.boolean(),
+  }),
+});
+
+export type AudienceAdapterInput = z.infer<typeof AudienceAdapterInputSchema>;
+export type AudienceAdapterOutput = z.infer<typeof AudienceAdapterOutputSchema>;

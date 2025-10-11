@@ -1,4 +1,5 @@
 import { ModelConfig, RoutingPolicy, AgentTask } from './schemas';
+import { getModelForAgent, getAllAvailableModels } from './ollama-config';
 
 // ============================================================================
 // ROUTER/ORCHESTRATOR FOR MULTI-MODEL SYSTEM
@@ -52,6 +53,18 @@ export class ModelRouter {
   }
 
   selectModel(agentType: string, context: TaskContext, policyName: string = 'balanced'): ModelConfig | null {
+    // First try to get model from Ollama configuration
+    try {
+      const ollamaModel = getModelForAgent(agentType, policyName);
+      if (ollamaModel && this.isModelAvailable(ollamaModel, context)) {
+        console.log(`[Router] Selected Ollama model ${ollamaModel.name} for ${agentType}`);
+        return ollamaModel;
+      }
+    } catch (error) {
+      console.warn(`[Router] Failed to get Ollama model for ${agentType}:`, error);
+    }
+
+    // Fallback to policy-based selection
     const policy = this.policies.get(policyName);
     if (!policy) {
       console.warn(`Policy ${policyName} not found, using default selection`);
@@ -262,9 +275,15 @@ export class ModelRouter {
   // ============================================================================
 
   private initializeDefaultModels(): void {
-    // High-quality models for planning and verification
+    // Initialize with Ollama models
+    const ollamaModels = getAllAvailableModels();
+    ollamaModels.forEach(model => {
+      this.addModel(model);
+    });
+
+    // Add fallback OpenAI models for when Ollama is not available
     this.addModel({
-      name: 'gpt-4-turbo',
+      name: 'gpt-4-turbo-fallback',
       provider: 'openai',
       model: 'gpt-4-turbo',
       maxTokens: 8000,
@@ -275,38 +294,14 @@ export class ModelRouter {
       quality: 'high',
     });
 
-    // Fast models for content generation
     this.addModel({
-      name: 'gpt-3.5-turbo',
+      name: 'gpt-3.5-turbo-fallback',
       provider: 'openai',
       model: 'gpt-3.5-turbo',
       maxTokens: 4000,
       temperature: 0.7,
       capabilities: ['slidewriter', 'media-finder', 'speaker-notes'],
       costPerToken: 0.000002,
-      speed: 'fast',
-      quality: 'medium',
-    });
-
-    // Local models for privacy-sensitive tasks
-    this.addModel({
-      name: 'llama-3.3-70b',
-      provider: 'local',
-      model: 'llama3.3:70b',
-      maxTokens: 4000,
-      temperature: 0.5,
-      capabilities: ['researcher', 'structurer', 'fact-checker'],
-      speed: 'slow',
-      quality: 'high',
-    });
-
-    this.addModel({
-      name: 'phi-4-14b',
-      provider: 'local',
-      model: 'phi4:14b',
-      maxTokens: 2000,
-      temperature: 0.7,
-      capabilities: ['slidewriter', 'copy-tightener', 'media-finder'],
       speed: 'fast',
       quality: 'medium',
     });

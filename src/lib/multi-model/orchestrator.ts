@@ -7,7 +7,21 @@ import {
   Slide, 
   ExecutiveSummary,
   AudienceAdaptation,
-  QualityCheck 
+  QualityCheck,
+  DataVizInput,
+  DataVizOutput,
+  MediaFinderInput,
+  MediaFinderOutput,
+  SpeakerNotesInput,
+  SpeakerNotesOutput,
+  AccessibilityInput,
+  AccessibilityOutput,
+  LiveWidgetInput,
+  LiveWidgetOutput,
+  ExecutiveSummaryInput,
+  ExecutiveSummaryOutput,
+  AudienceAdapterInput,
+  AudienceAdapterOutput
 } from './schemas';
 
 // ============================================================================
@@ -463,7 +477,7 @@ export class MultiModelOrchestrator {
     
     // Import and initialize all agents
     try {
-      // Import agents dynamically
+      // Core agents
       const { ResearcherAgent } = await import('./agents/researcher');
       const researcher = new ResearcherAgent();
       researcher.setRouter(this.router);
@@ -488,6 +502,42 @@ export class MultiModelOrchestrator {
       const factChecker = new FactCheckerAgent();
       factChecker.setRouter(this.router);
       this.agents.set('fact-checker', factChecker);
+
+      // New specialized agents
+      const { DataVizPlannerAgent } = await import('./agents/data-viz-planner');
+      const dataVizPlanner = new DataVizPlannerAgent();
+      dataVizPlanner.setRouter(this.router);
+      this.agents.set('data-viz-planner', dataVizPlanner);
+
+      const { MediaFinderAgent } = await import('./agents/media-finder');
+      const mediaFinder = new MediaFinderAgent();
+      mediaFinder.setRouter(this.router);
+      this.agents.set('media-finder', mediaFinder);
+
+      const { SpeakerNotesGeneratorAgent } = await import('./agents/speaker-notes-generator');
+      const speakerNotesGenerator = new SpeakerNotesGeneratorAgent();
+      speakerNotesGenerator.setRouter(this.router);
+      this.agents.set('speaker-notes-generator', speakerNotesGenerator);
+
+      const { AccessibilityLinterAgent } = await import('./agents/accessibility-linter');
+      const accessibilityLinter = new AccessibilityLinterAgent();
+      accessibilityLinter.setRouter(this.router);
+      this.agents.set('accessibility-linter', accessibilityLinter);
+
+      const { LiveWidgetPlannerAgent } = await import('./agents/live-widget-planner');
+      const liveWidgetPlanner = new LiveWidgetPlannerAgent();
+      liveWidgetPlanner.setRouter(this.router);
+      this.agents.set('live-widget-planner', liveWidgetPlanner);
+
+      const { ExecutiveSummaryAgent } = await import('./agents/executive-summary');
+      const executiveSummary = new ExecutiveSummaryAgent();
+      executiveSummary.setRouter(this.router);
+      this.agents.set('executive-summary', executiveSummary);
+
+      const { AudienceAdapterAgent } = await import('./agents/audience-adapter');
+      const audienceAdapter = new AudienceAdapterAgent();
+      audienceAdapter.setRouter(this.router);
+      this.agents.set('audience-adapter', audienceAdapter);
 
       console.log(`[Orchestrator] Initialized ${this.agents.size} agents`);
     } catch (error) {
