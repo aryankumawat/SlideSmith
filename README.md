@@ -45,13 +45,87 @@ The system orchestrates 12 specialized agents in a directed acyclic graph (DAG) 
 ### Execution Model
 
 ```
-Input → Research → Structure → Generate → [QA Pipeline] → Enhance → Export
-                                            ↓
-                                    [Parallel Execution]
-                                    ├─ Fact Check
-                                    ├─ Accessibility
-                                    ├─ Readability
-                                    └─ Copy Tightening
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        SLIDESMITH AGENT PIPELINE                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                              ┌───────────┐
+                              │   Input   │
+                              │  (Topic,  │
+                              │ Audience) │
+                              └─────┬─────┘
+                                    │
+                                    ▼
+                          ┌─────────────────┐
+                          │   RESEARCHER    │
+                          │  ◆ Phi-4 (14B)  │
+                          │  ◆ Evidence     │
+                          │    Gathering    │
+                          └────────┬────────┘
+                                   │
+                                   ▼
+                          ┌─────────────────┐
+                          │   STRUCTURER    │
+                          │ ◆ Gemma3 (4B)   │
+                          │ ◆ Narrative Arc │
+                          │ ◆ Outline       │
+                          └────────┬────────┘
+                                   │
+                                   ▼
+                          ┌─────────────────┐
+                          │  SLIDEWRITER    │
+                          │ ◆ Gemma3 (4B)   │
+                          │ ◆ Parallel      │
+                          │   Generation    │
+                          └────────┬────────┘
+                                   │
+                  ┌────────────────┼────────────────┐
+                  │                │                │
+                  ▼                ▼                ▼
+         ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+         │ Fact Checker │ │ Accessibility│ │  Readability │
+         │              │ │    Linter    │ │   Analyzer   │
+         └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+                │                │                │
+                └────────────────┼────────────────┘
+                                 │
+                    [Parallel QA Validation]
+                                 │
+                                 ▼
+                        ┌────────────────┐
+                        │ Copy Tightener │
+                        │  ◆ Consistency │
+                        └────────┬───────┘
+                                 │
+                ┌────────────────┼────────────────┐
+                │                │                │
+                ▼                ▼                ▼
+       ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+       │ Media Finder │ │ Speaker      │ │ Widget       │
+       │              │ │ Notes        │ │ Planner      │
+       └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+              │                │                │
+              └────────────────┼────────────────┘
+                               │
+                               ▼
+                      ┌─────────────────┐
+                      │  EXPORT ENGINE  │
+                      │  ◆ PDF (PDFKit) │
+                      │  ◆ PPTX (Native)│
+                      │  ◆ JSON         │
+                      └────────┬────────┘
+                               │
+                               ▼
+                      ┌─────────────────┐
+                      │     Output      │
+                      │  (Presentation) │
+                      └─────────────────┘
+
+Legend:
+  ◆ Model/Technology used
+  → Sequential execution
+  ├─ Parallel execution
+  ▼ Data flow direction
 ```
 
 **Performance Characteristics:**
@@ -59,6 +133,98 @@ Input → Research → Structure → Generate → [QA Pipeline] → Enhance → 
 - **Smart Model Routing**: Task-aware model selection (60% cost optimization)
 - **Graceful Degradation**: Timeout handling with exponential backoff (99.5% reliability)
 - **Lazy Loading**: Dynamic agent initialization (50% memory reduction)
+
+---
+
+## System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           CLIENT LAYER (Browser)                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  React 18 + Next.js 15                                                       │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐           │
+│  │  Landing   │  │   Studio   │  │   Studio   │  │   Canvas   │           │
+│  │   Page     │  │  (Legacy)  │  │   (New)    │  │  Renderer  │           │
+│  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘  └─────┬──────┘           │
+│        │               │               │               │                    │
+│        └───────────────┴───────────────┴───────────────┘                    │
+│                               │                                              │
+│                        IndexedDB (Client Storage)                            │
+└───────────────────────────────┼──────────────────────────────────────────────┘
+                                │ HTTPS/TLS 1.3
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        APPLICATION LAYER (Next.js API)                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌─────────────────────┐   ┌──────────────────┐   ┌───────────────────┐   │
+│  │  /api/generate-deck │   │  /api/multi-     │   │  /api/export/     │   │
+│  │  (Simplified)       │   │  model-generate  │   │  - pdf            │   │
+│  │                     │   │  (Full Pipeline) │   │  - pptx           │   │
+│  └──────────┬──────────┘   └────────┬─────────┘   └────────┬──────────┘   │
+│             │                       │                      │                │
+│             ▼                       ▼                      ▼                │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │              ORCHESTRATION LAYER                                     │   │
+│  │  ┌──────────────────────┐    ┌────────────────────────┐            │   │
+│  │  │  deck-generator.ts   │    │  orchestrator.ts       │            │   │
+│  │  │  (Stream Pipeline)   │    │  (Multi-Agent DAG)     │            │   │
+│  │  └──────────┬───────────┘    └───────────┬────────────┘            │   │
+│  │             │                             │                          │   │
+│  │             ▼                             ▼                          │   │
+│  │  ┌──────────────────────────────────────────────────────────┐      │   │
+│  │  │           LLM ABSTRACTION (llm.ts)                       │      │   │
+│  │  │  ┌──────────────────────────────────────────────────┐   │      │   │
+│  │  │  │  Provider Router (Ollama / OpenAI / Custom)      │   │      │   │
+│  │  │  └──────────────────────────────────────────────────┘   │      │   │
+│  │  └──────────────────────────────────────────────────────────┘      │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │              AGENT LAYER (multi-model/agents/)                       │   │
+│  │  ┌──────────┐  ┌───────────┐  ┌────────────┐  ┌──────────────┐    │   │
+│  │  │Researcher│  │Structurer │  │Slidewriter │  │ Fact Checker │    │   │
+│  │  └────┬─────┘  └─────┬─────┘  └─────┬──────┘  └──────┬───────┘    │   │
+│  │       │              │              │                 │             │   │
+│  │  ┌────▼────┐  ┌──────▼──────┐  ┌───▼─────────┐  ┌───▼──────────┐ │   │
+│  │  │  Copy   │  │Accessibility│  │  Media      │  │  Speaker     │ │   │
+│  │  │Tightener│  │   Linter    │  │  Finder     │  │   Notes      │ │   │
+│  │  └─────────┘  └─────────────┘  └─────────────┘  └──────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │              EXPORT LAYER                                            │   │
+│  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐ │   │
+│  │  │  PDFKit          │  │ PptxGenJS        │  │ JSON Serializer  │ │   │
+│  │  │  (Theme Render)  │  │ (Native Charts)  │  │                  │ │   │
+│  │  └──────────────────┘  └──────────────────┘  └──────────────────┘ │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└───────────────────────────────┬──────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        LLM PROVIDER LAYER                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────────┐        ┌──────────────────────┐                  │
+│  │  OLLAMA (Local)      │        │  OPENAI (Cloud)      │                  │
+│  │  ┌────────────────┐  │        │  ┌────────────────┐  │                  │
+│  │  │ Phi-4 (14B)    │  │        │  │ GPT-4          │  │                  │
+│  │  │ Gemma3 (4B)    │  │        │  │ GPT-3.5-Turbo  │  │                  │
+│  │  └────────────────┘  │        │  └────────────────┘  │                  │
+│  │  Port: 11434         │        │  api.openai.com      │                  │
+│  └──────────────────────┘        └──────────────────────┘                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        EXTERNAL SERVICES                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐                                                         │
+│  │  Unsplash API   │  → Image sourcing (keyword-based)                      │
+│  └─────────────────┘                                                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -339,14 +505,144 @@ interface AgentResponse {
 
 ### Execution Flow
 
-1. **Initialization**: Orchestrator loads agent configurations
-2. **Research Phase**: Researcher agent gathers and validates evidence
-3. **Structure Phase**: Structurer plans narrative arc and section breakdown
-4. **Generation Phase**: Slidewriter creates slide content per section
-5. **QA Pipeline**: Parallel validation (fact-checking, accessibility, readability, copy)
-6. **Enhancement Phase**: Media finder, widget planner, speaker notes generation
-7. **Finalization**: Executive summary generation
-8. **Export**: Theme-aware rendering to target format
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         DATA FLOW DIAGRAM                                  │
+└───────────────────────────────────────────────────────────────────────────┘
+
+Phase 1: INITIALIZATION
+═══════════════════════
+┌──────────────────────┐
+│  User Input          │ → { topic, audience, tone, slideCount }
+│  (Studio Interface)  │
+└──────────┬───────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────┐
+│  Orchestrator.initialize()                                │
+│  • Load agent configurations                              │
+│  • Select model policy (quality/speed/balanced)           │
+│  • Initialize LLM client                                  │
+└──────────┬───────────────────────────────────────────────┘
+           │
+           ▼
+
+Phase 2: RESEARCH
+══════════════════
+┌──────────────────────────────────────────────────────────┐
+│  Researcher Agent                                         │
+│  Input: { topic, audience }                              │
+│  ├─► Extract subtopics                                    │
+│  ├─► Search for information                               │
+│  ├─► Validate sources                                     │
+│  └─► Generate research snippets                           │
+│  Output: ResearchSnippet[]                                │
+└──────────┬───────────────────────────────────────────────┘
+           │ [ snippets: {id, source, text, tags, confidence} ]
+           ▼
+
+Phase 3: STRUCTURE
+═══════════════════
+┌──────────────────────────────────────────────────────────┐
+│  Structurer Agent                                         │
+│  Input: { topic, research, slideCount }                  │
+│  ├─► Generate narrative arc                               │
+│  ├─► Create sections                                      │
+│  ├─► Generate title & conclusion                          │
+│  └─► Optimize flow                                        │
+│  Output: Outline                                          │
+└──────────┬───────────────────────────────────────────────┘
+           │ [ sections: {id, title, goal, estSlides, keyPoints[]} ]
+           ▼
+
+Phase 4: GENERATION (Parallel per section)
+════════════════════════════════════════════
+┌──────────────────────────────────────────────────────────┐
+│  Slidewriter Agent (×N sections)                          │
+│  Input: { section, snippets }                            │
+│  ├─► Generate slide blocks                                │
+│  ├─► Map citations                                        │
+│  ├─► Create speaker notes                                 │
+│  └─► Validate schema                                      │
+│  Output: Slide[]                                          │
+└──────────┬───────────────────────────────────────────────┘
+           │ [ slides: {layout, blocks[], notes, cites[]} ]
+           ▼
+
+Phase 5: QUALITY ASSURANCE (Parallel execution)
+═════════════════════════════════════════════════
+           ┌────────────────┬────────────────┬────────────────┐
+           │                │                │                │
+           ▼                ▼                ▼                ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ FactChecker  │  │Accessibility │  │ Readability  │  │CopyTightener │
+│              │  │    Linter    │  │   Analyzer   │  │              │
+│ • Verify     │  │ • WCAG check │  │ • Grade      │  │ • Tone       │
+│   claims     │  │ • Contrast   │  │   level      │  │   consistency│
+│ • Map cites  │  │ • Alt text   │  │ • Complexity │  │ • Terminology│
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │                 │
+       └─────────────────┴─────────────────┴─────────────────┘
+                               │
+                               ▼
+                    [ QualityReport: {
+                        factualAccuracy: 0.95,
+                        accessibilityScore: 88,
+                        readabilityGrade: 10,
+                        toneConsistency: 0.92
+                      } ]
+
+Phase 6: ENHANCEMENT (Parallel execution)
+══════════════════════════════════════════
+           ┌────────────────┬────────────────┬────────────────┐
+           │                │                │                │
+           ▼                ▼                ▼                ▼
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ MediaFinder  │  │ DataViz      │  │ SpeakerNotes │  │ Widget       │
+│              │  │ Planner      │  │ Generator    │  │ Planner      │
+│ • Find       │  │ • Chart      │  │ • Timing     │  │ • Live data  │
+│   images     │  │   type       │  │   estimates  │  │   endpoints  │
+│ • Alt text   │  │ • Encoding   │  │ • Transitions│  │ • Refresh    │
+└──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+       │                 │                 │                 │
+       └─────────────────┴─────────────────┴─────────────────┘
+                               │
+                               ▼
+                    [ Enhanced Deck with media, charts, notes ]
+
+Phase 7: EXPORT
+════════════════
+┌──────────────────────────────────────────────────────────┐
+│  Export Engine                                            │
+│  Input: { deck, format: 'pdf'|'pptx'|'json' }           │
+│  ├─► Apply theme                                          │
+│  ├─► Render charts (native)                               │
+│  ├─► Embed images                                         │
+│  ├─► Generate speaker notes                               │
+│  └─► Serialize to format                                  │
+│  Output: Buffer                                           │
+└──────────┬───────────────────────────────────────────────┘
+           │
+           ▼
+┌──────────────────────────────────────────────────────────┐
+│  Download / Display                                       │
+│  • PDF: Via PDFKit                                        │
+│  • PPTX: Via PptxGenJS with native charts                │
+│  • JSON: Direct serialization                             │
+└──────────────────────────────────────────────────────────┘
+
+Timing (Balanced Policy, 12 slides):
+────────────────────────────────────
+Phase 1: ~1s  (Initialization)
+Phase 2: ~30s (Research - Phi-4)
+Phase 3: ~12s (Structure - Gemma3)
+Phase 4: ~60s (Generation - 12 slides × 5s avg)
+Phase 5: ~15s (QA - Parallel)
+Phase 6: ~10s (Enhancement - Parallel)
+Phase 7: ~2s  (Export)
+────────────────────────────────────
+Total:   ~130s (2 minutes 10 seconds)
+```
 
 ---
 
