@@ -148,7 +148,75 @@ Return as JSON:
 }`;
 
     const response = await this.callLLM(prompt);
-    return JSON.parse(response.content);
+    
+    if (!response || !response.content) {
+      console.warn('[structurer] Empty response from LLM, using fallback narrative structure');
+      return {
+        narrativeArc: `A comprehensive exploration of ${input.topic} for ${input.audience}`,
+        sections: [
+          {
+            purpose: 'Introduction and context setting',
+            emotionalTone: 'curiosity',
+            keyMessage: 'Understanding the current landscape',
+            evidenceTypes: ['data', 'examples']
+          },
+          {
+            purpose: 'Core concepts and insights',
+            emotionalTone: 'excitement',
+            keyMessage: 'Key findings and developments',
+            evidenceTypes: ['data', 'trends']
+          },
+          {
+            purpose: 'Practical applications',
+            emotionalTone: 'confidence',
+            keyMessage: 'Real-world impact and implementation',
+            evidenceTypes: ['examples', 'case studies']
+          },
+          {
+            purpose: 'Future outlook and next steps',
+            emotionalTone: 'excitement',
+            keyMessage: 'What lies ahead',
+            evidenceTypes: ['trends', 'data']
+          }
+        ]
+      };
+    }
+
+    try {
+      return JSON.parse(response.content);
+    } catch (error) {
+      console.warn('[structurer] Failed to parse narrative structure JSON:', error);
+      console.warn('[structurer] Response content:', response.content);
+      return {
+        narrativeArc: `A comprehensive exploration of ${input.topic} for ${input.audience}`,
+        sections: [
+          {
+            purpose: 'Introduction and context setting',
+            emotionalTone: 'curiosity',
+            keyMessage: 'Understanding the current landscape',
+            evidenceTypes: ['data', 'examples']
+          },
+          {
+            purpose: 'Core concepts and insights',
+            emotionalTone: 'excitement',
+            keyMessage: 'Key findings and developments',
+            evidenceTypes: ['data', 'trends']
+          },
+          {
+            purpose: 'Practical applications',
+            emotionalTone: 'confidence',
+            keyMessage: 'Real-world impact and implementation',
+            evidenceTypes: ['examples', 'case studies']
+          },
+          {
+            purpose: 'Future outlook and next steps',
+            emotionalTone: 'excitement',
+            keyMessage: 'What lies ahead',
+            evidenceTypes: ['trends', 'data']
+          }
+        ]
+      };
+    }
   }
 
   private async createOutlineSections(
@@ -210,7 +278,34 @@ Return as JSON:
 }`;
 
     const response = await this.callLLM(prompt);
-    const sectionData = JSON.parse(response.content);
+    
+    if (!response || !response.content) {
+      console.warn('[structurer] Empty response from LLM, using fallback section data');
+      return {
+        id: `section-${index + 1}`,
+        title: `Section ${index + 1}`,
+        goal: 'Key insights and information',
+        estSlides: slideCount,
+        keyPoints: ['Key point 1', 'Key point 2', 'Key point 3'],
+        chartSuggested: false,
+        chartReason: ''
+      };
+    }
+
+    let sectionData;
+    try {
+      sectionData = JSON.parse(response.content);
+    } catch (error) {
+      console.warn('[structurer] Failed to parse section data JSON:', error);
+      console.warn('[structurer] Response content:', response.content);
+      sectionData = {
+        title: `Section ${index + 1}`,
+        goal: 'Key insights and information',
+        keyPoints: ['Key point 1', 'Key point 2', 'Key point 3'],
+        chartSuggested: false,
+        chartReason: ''
+      };
+    }
 
     return {
       id: `section-${index + 1}`,
@@ -252,7 +347,13 @@ Create a title that:
 Return only the title, no quotes or extra text.`;
 
     const response = await this.callLLM(prompt);
-    return response.trim().replace(/['"]/g, '');
+    
+    if (!response || !response.content) {
+      console.warn('[structurer] Empty response for title generation, using fallback');
+      return `${input.topic} - A Comprehensive Overview`;
+    }
+    
+    return response.content.trim().replace(/['"]/g, '');
   }
 
   private generateSubtitle(input: StructurerInput): string {
@@ -288,7 +389,13 @@ Create a conclusion that:
 Return only the conclusion text.`;
 
     const response = await this.callLLM(prompt);
-    return response.trim();
+    
+    if (!response || !response.content) {
+      console.warn('[structurer] Empty response for conclusion generation, using fallback');
+      return `Thank you for your attention. Questions and discussion welcome.`;
+    }
+    
+    return response.content.trim();
   }
 
   private extractReferences(snippets: ResearchSnippet[]): string[] {

@@ -40,7 +40,7 @@ export class SlidewriterAgent extends BaseAgent {
       description: 'Turns outline sections + research into concrete slides',
       capabilities: ['content-generation', 'slide-formatting', 'citation-integration'],
       maxRetries: 3,
-      timeout: 15000,
+      timeout: 30000,
     };
     super(config);
   }
@@ -139,7 +139,20 @@ export class SlidewriterAgent extends BaseAgent {
     const prompt = this.buildSlidePrompt(section, snippets, context, wordBudgets, slideNumber, totalSlides);
     
     const response = await this.callLLM(prompt);
-    const slideData = JSON.parse(response.content);
+    
+    if (!response || !response.content) {
+      console.warn('[slidewriter] Empty response from LLM, using fallback slide data');
+      return this.createFallbackSlide(section, slideNumber, totalSlides);
+    }
+
+    let slideData;
+    try {
+      slideData = JSON.parse(response.content);
+    } catch (error) {
+      console.warn('[slidewriter] Failed to parse slide data JSON:', error);
+      console.warn('[slidewriter] Response content:', response.content);
+      return this.createFallbackSlide(section, slideNumber, totalSlides);
+    }
 
     // Convert to proper Slide format
     const slide: Slide = {
@@ -414,6 +427,26 @@ Return as JSON:
     }
 
     return true;
+  }
+
+  private createFallbackSlide(section: OutlineSection, slideNumber: number, totalSlides: number): Slide {
+    return {
+      id: `slide-${Date.now()}-${slideNumber}`,
+      layout: 'title-content',
+      blocks: [
+        {
+          type: 'Heading',
+          text: section.title || `Slide ${slideNumber}`,
+          level: 1,
+        },
+        {
+          type: 'Bullets',
+          items: section.keyPoints?.slice(0, 3) || ['Key point 1', 'Key point 2', 'Key point 3'],
+        },
+      ],
+      notes: `Discuss ${section.title || 'this topic'} in detail.`,
+      citations: [],
+    };
   }
 
   protected getQualityScore(output: SlidewriterOutput): number {
