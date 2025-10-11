@@ -1,6 +1,21 @@
-import { LLMClient } from './llm';
+import { LLMClient, LLMConfig } from './llm';
 
-const llmClient = new LLMClient();
+// Initialize LLM client with environment variables
+const getLLMConfig = (): LLMConfig => {
+  const provider = (process.env.LLM_PROVIDER || 'ollama') as 'openai' | 'ollama' | 'demo';
+  const apiKey = process.env.LLM_API_KEY || 'ollama';
+  const baseUrl = process.env.LLM_BASE_URL || 'http://localhost:11434';
+  const model = process.env.LLM_MODEL || 'gemma3:4b';
+  
+  return {
+    provider,
+    apiKey,
+    baseUrl,
+    model
+  };
+};
+
+const llmClient = new LLMClient(getLLMConfig());
 
 export async function generateOutline(params: {
   slide_count: number;
