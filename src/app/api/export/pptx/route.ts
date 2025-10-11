@@ -122,7 +122,15 @@ function addTitleSlideContent(pptxSlide: any, blocks: SlideBlock[], themeColors:
   }
 }
 
+// Helper function to truncate text to prevent overflow
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength - 3) + '...';
+}
+
 function addTitleBulletsContent(pptxSlide: any, blocks: SlideBlock[], themeColors: any) {
+  if (!blocks) return; // Guard against undefined blocks
+  
   const heading = blocks.find(b => b.type === 'Heading');
   const subheading = blocks.find(b => b.type === 'Subheading');
   const bullets = blocks.find(b => b.type === 'Bullets');
@@ -151,15 +159,19 @@ function addTitleBulletsContent(pptxSlide: any, blocks: SlideBlock[], themeColor
   }
   
   if (bullets && 'items' in bullets) {
-    const bulletText = bullets.items.map(item => `• ${item}`).join('\n');
+    // Truncate bullets to prevent overflow (max 80 chars per bullet)
+    const truncatedItems = bullets.items.map(item => truncateText(item, 80));
+    // Limit to 5 bullets max for better readability
+    const limitedItems = truncatedItems.slice(0, 5);
+    const bulletText = limitedItems.map(item => `• ${item}`).join('\n');
     pptxSlide.addText(bulletText, {
       x: 0.5,
       y: 2,
       w: 9,
       h: 3,
-      fontSize: 20,
+      fontSize: 18, // Reduced from 20 to fit more text
       color: themeColors.text,
-      lineSpacing: 32,
+      lineSpacing: 28, // Reduced from 32 for tighter spacing
     });
   }
 }
@@ -395,32 +407,35 @@ function addBlocksToSlide(pptxSlide: any, blocks: SlideBlock[], x: number, y: nu
 }
 
 function getThemeColors(theme: string) {
-  const themes = {
-    DeepSpace: {
+  // Map both old and new theme names
+  const normalizedTheme = theme.toLowerCase().replace(/[_-]/g, '');
+  
+  const themes: Record<string, any> = {
+    deepspace: {
       background: '0a0a0f',
       text: 'ffffff',
       textSecondary: 'a1a1aa',
       primary: '6366f1',
     },
-    Ultraviolet: {
+    ultraviolet: {
       background: '1a0b2e',
       text: 'ffffff',
       textSecondary: 'c4b5fd',
       primary: '8b5cf6',
     },
-    Minimal: {
+    minimal: {
       background: 'ffffff',
       text: '111827',
       textSecondary: '6b7280',
       primary: '000000',
     },
-    Corporate: {
+    corporate: {
       background: 'f8fafc',
       text: '1e293b',
       textSecondary: '64748b',
       primary: '1e40af',
     },
-    NeonGrid: {
+    neongrid: {
       background: '000000',
       text: '00ff88',
       textSecondary: '00d4ff',
@@ -428,5 +443,5 @@ function getThemeColors(theme: string) {
     },
   };
   
-  return themes[theme as keyof typeof themes] || themes.DeepSpace;
+  return themes[normalizedTheme] || themes.deepspace;
 }

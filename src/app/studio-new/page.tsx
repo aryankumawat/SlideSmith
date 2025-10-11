@@ -304,15 +304,12 @@ export default function StudioNewPage() {
                           </ul>
                         )}
                         
-                        {/* Image/Visual indicator with icon */}
+                        {/* Image/Visual indicator with icon (compact) */}
                         {slide.image && (
-                          <div className="mt-3 p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-                            <div className="flex items-start gap-2">
-                              <span className="text-lg">🎨</span>
-                              <div className="text-xs flex-1">
-                                <strong className="text-purple-700 block mb-1">Visual Element:</strong>
-                                <p className="text-gray-600 leading-relaxed">{slide.image.prompt}</p>
-                              </div>
+                          <div className="mt-2 p-2 bg-gradient-to-br from-purple-50 to-pink-50 rounded border border-purple-200">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">🎨</span>
+                              <strong className="text-xs text-purple-700">Visual: {slide.image.alt || 'Diagram included'}</strong>
                             </div>
                           </div>
                         )}

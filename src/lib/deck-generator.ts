@@ -263,13 +263,16 @@ Return ONLY valid JSON.`;
     const cleaned = cleanJSONResponse(response);
     const parsed = JSON.parse(cleaned);
     
-    // Ensure image is always present
+    // Ensure image is always present with Unsplash URL
     if (!parsed.image) {
       parsed.image = {
         prompt: `Professional ${params.slide_context.title} diagram with modern, clean design`,
         alt: `Visual representation of ${params.slide_context.title}`,
-        source: 'placeholder'
+        source: generateUnsplashUrl(params.slide_context.title)
       };
+    } else if (!parsed.image.source || parsed.image.source === 'placeholder') {
+      // Replace placeholder with real Unsplash image
+      parsed.image.source = generateUnsplashUrl(params.slide_context.title);
     }
     
     return parsed;
@@ -290,7 +293,7 @@ Return ONLY valid JSON.`;
       image: {
         prompt: `Modern infographic showing ${topic} with icons, arrows, and data visualizations in a clean, professional style`,
         alt: `${topic} concept diagram`,
-        source: 'placeholder'
+        source: generateUnsplashUrl(topic)
       }
     };
   }
@@ -305,6 +308,23 @@ function generateCitations(topic: string): string[] {
     `Industry research on ${topic}, ${year}`,
     `Market analysis and trends, ${year - 1}-${year}`
   ];
+}
+
+// Helper function to generate Unsplash image URL
+function generateUnsplashUrl(topic: string): string {
+  // Extract keywords from topic
+  const keywords = topic
+    .replace(/[^\w\s]/g, '') // Remove special chars
+    .split(' ')
+    .filter(word => word.length > 3) // Only meaningful words
+    .slice(0, 3) // Max 3 keywords
+    .join(',');
+  
+  // Fallback if no keywords
+  const searchTerm = keywords || 'business,presentation,professional';
+  
+  // Use Unsplash Source API for random relevant images
+  return `https://source.unsplash.com/800x600/?${encodeURIComponent(searchTerm)}`;
 }
 
 export async function generateVisual(params: {
