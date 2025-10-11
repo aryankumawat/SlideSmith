@@ -43,58 +43,7 @@ The system orchestrates 12 specialized agents in a directed acyclic graph (DAG) 
 | **Readability Analyzer** | Linguistic complexity scoring, audience-appropriateness validation | QA Phase | Fast |
 | **PPTX Export Agent** | Native chart rendering, smart text wrapping, theme application | Export Phase | N/A |
 
-### Execution Model (Interactive Mermaid Diagram)
-
-```mermaid
-graph TD
-    A[User Input] --> B[Researcher<br/>Phi-4 14B]
-    B --> C[Structurer<br/>Gemma3 4B]
-    C --> D[Slidewriter<br/>Gemma3 4B]
-    
-    D --> E[QA Pipeline]
-    
-    E --> F1[Fact Checker<br/>Gemma3 4B]
-    E --> F2[Accessibility Linter<br/>Gemma3 4B]
-    E --> F3[Readability Analyzer<br/>Gemma3 4B]
-    E --> F4[Copy Tightener<br/>Gemma3 4B]
-    
-    F1 --> G[QA Merge]
-    F2 --> G
-    F3 --> G
-    F4 --> G
-    
-    G --> H[Enhancement]
-    
-    H --> I1[Media Finder]
-    H --> I2[Speaker Notes]
-    H --> I3[Widget Planner]
-    H --> I4[Data Viz Planner]
-    
-    I1 --> J[Assembly]
-    I2 --> J
-    I3 --> J
-    I4 --> J
-    
-    J --> K[Export]
-    
-    K --> L1[PDF]
-    K --> L2[PPTX]
-    K --> L3[JSON]
-    
-    L1 --> M[Output]
-    L2 --> M
-    L3 --> M
-```
-
-**Performance Characteristics:**
-- **Parallel QA Pipeline**: 4 concurrent validators (75% latency reduction)
-- **Smart Model Routing**: Task-aware model selection (60% cost optimization)
-- **Graceful Degradation**: Timeout handling with exponential backoff (99.5% reliability)
-- **Lazy Loading**: Dynamic agent initialization (50% memory reduction)
-
----
-
-## System Architecture Diagram (Interactive)
+### Architecture Overview
 
 ```mermaid
 graph TB
@@ -131,6 +80,11 @@ graph TB
     
     A7 --> Unsplash[Unsplash API]
 ```
+
+**Performance:**
+- Parallel QA Pipeline: 4 concurrent validators (75% latency reduction)
+- Smart Model Routing: Task-aware model selection (60% cost optimization)
+- Graceful Degradation: Timeout handling with exponential backoff (99.5% reliability)
 
 ---
 
@@ -418,88 +372,18 @@ interface AgentResponse {
 }
 ```
 
-### Execution Flow (Interactive Flowchart)
+### Performance Benchmarks
 
-```mermaid
-flowchart TD
-    Start[User Input] --> Init[Phase 1: Init<br/>1s]
-    
-    Init --> Research[Phase 2: Research<br/>Researcher Phi-4 14B<br/>30s]
-    
-    Research --> Structure[Phase 3: Structure<br/>Structurer Gemma3 4B<br/>12s]
-    
-    Structure --> Generate[Phase 4: Generation<br/>Slidewriter Gemma3 4B<br/>60s]
-    
-    Generate --> QA[Phase 5: QA Pipeline<br/>15s]
-    
-    QA --> QA1[Fact Checker<br/>Gemma3 4B]
-    QA --> QA2[Accessibility Linter<br/>Gemma3 4B]
-    QA --> QA3[Readability Analyzer<br/>Gemma3 4B]
-    QA --> QA4[Copy Tightener<br/>Gemma3 4B]
-    
-    QA1 --> QAMerge[QA Merge]
-    QA2 --> QAMerge
-    QA3 --> QAMerge
-    QA4 --> QAMerge
-    
-    QAMerge --> Enhance[Phase 6: Enhancement<br/>10s]
-    
-    Enhance --> E1[Media Finder]
-    Enhance --> E2[Data Viz Planner]
-    Enhance --> E3[Speaker Notes]
-    Enhance --> E4[Widget Planner]
-    
-    E1 --> Assembly[Assembly]
-    E2 --> Assembly
-    E3 --> Assembly
-    E4 --> Assembly
-    
-    Assembly --> Export[Phase 7: Export<br/>2s]
-    
-    Export --> PDF[PDF]
-    Export --> PPTX[PPTX]
-    Export --> JSON[JSON]
-    
-    PDF --> Output[Final Output<br/>Total: 130s]
-    PPTX --> Output
-    JSON --> Output
-```
+**Timing (12-slide deck, Balanced Policy):**
+- Phase 1: Initialization (~1s)
+- Phase 2: Research - Phi-4 14B (~30s)
+- Phase 3: Structure - Gemma3 4B (~12s)
+- Phase 4: Generation - Gemma3 4B (~60s)
+- Phase 5: QA Pipeline - 4 parallel agents (~15s)
+- Phase 6: Enhancement - Media + Notes (~10s)
+- Phase 7: Export - PDF/PPTX/JSON (~2s)
+- **Total: ~130s (2 min 10 sec)**
 
-**Timing Breakdown (Balanced Policy, 12 slides):**
-
-| Phase | Duration | Model | Notes |
-|-------|----------|-------|-------|
-| **Phase 1:** Initialization | ~1s | N/A | Config loading, policy selection |
-| **Phase 2:** Research | ~30s | Phi-4 14B | Evidence gathering, source validation |
-| **Phase 3:** Structure | ~12s | Gemma3 4B | Narrative arc, outline creation |
-| **Phase 4:** Generation | ~60s | Gemma3 4B | 12 slides × 5s avg, parallel sections |
-| **Phase 5:** QA Pipeline | ~15s | Gemma3 4B | 4 concurrent validators |
-| **Phase 6:** Enhancement | ~10s | Various | Parallel media, charts, notes |
-| **Phase 7:** Export | ~2s | N/A | Theme application, rendering |
-| **TOTAL** | **~130s** | | **2 minutes 10 seconds** |
-```
-
----
-
-## Performance Characteristics
-
-### Benchmarks (M1 Pro, 16GB RAM)
-
-| **Operation** | **Model** | **Latency** | **Tokens/sec** |
-|---------------|-----------|-------------|----------------|
-| Research (10 snippets) | Phi-4 | 25-30s | ~15 |
-| Structure (8 sections) | Gemma3-4B | 8-12s | ~45 |
-| Slide Generation (per slide) | Gemma3-4B | 4-6s | ~45 |
-| QA Pipeline (4 agents) | Gemma3-4B | 12-15s | ~45 |
-| Full Presentation (12 slides) | Balanced | 5-8 min | N/A |
-
-### Optimization Strategies
-
-- **Model Caching**: Ollama model persistence (3s load time)
-- **Parallel Execution**: QA pipeline concurrent processing (4× speedup)
-- **Smart Routing**: Task-complexity based model selection
-- **Request Batching**: Grouped API calls where applicable
-- **Lazy Loading**: On-demand agent initialization
 
 ---
 
