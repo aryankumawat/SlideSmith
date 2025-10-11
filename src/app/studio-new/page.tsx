@@ -54,6 +54,67 @@ export default function StudioNewPage() {
     }
   };
 
+  const convertDeckForExport = (deck: Deck) => {
+    // Convert new deck format to old format expected by export APIs
+    return {
+      id: `deck-${Date.now()}`,
+      title: deck.title,
+      theme: deck.theme,
+      meta: {
+        title: deck.title,
+        theme: deck.theme,
+        audience: 'general',
+        tone: 'professional',
+      },
+      slides: deck.slides.map((slide, index) => {
+        const blocks: any[] = [];
+        
+        // Add title as Heading block
+        if (slide.title) {
+          blocks.push({
+            type: 'Heading',
+            text: slide.title,
+            level: 1,
+          });
+        }
+        
+        // Add bullets as Bullets block
+        if (slide.bullets && slide.bullets.length > 0) {
+          blocks.push({
+            type: 'Bullets',
+            items: slide.bullets,
+          });
+        }
+        
+        // Add chart if present
+        if (slide.chart_spec) {
+          blocks.push({
+            type: 'Chart',
+            chartSpec: slide.chart_spec,
+          });
+        }
+        
+        // Add image if present
+        if (slide.image) {
+          blocks.push({
+            type: 'Image',
+            url: slide.image.source || '',
+            alt: slide.image.alt,
+            caption: slide.image.prompt,
+          });
+        }
+        
+        return {
+          id: `slide-${index}`,
+          layout: slide.layout || 'title-content',
+          blocks,
+          notes: slide.notes || '',
+          citations: slide.citations || [],
+        };
+      }),
+    };
+  };
+
   const handleExport = async (format: 'pptx' | 'pdf' | 'json') => {
     if (!generatedDeck) return;
     
@@ -73,12 +134,14 @@ export default function StudioNewPage() {
     
     try {
       const endpoint = format === 'pptx' ? '/api/export/pptx' : '/api/export/pdf';
+      const convertedDeck = convertDeckForExport(generatedDeck);
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ deck: generatedDeck }),
+        body: JSON.stringify({ deck: convertedDeck }),
       });
 
       if (!response.ok) {
