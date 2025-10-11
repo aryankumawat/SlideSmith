@@ -101,9 +101,21 @@ Return as a JSON array of strings. Each subtopic should be:
 
 Example: ["market trends", "key challenges", "success factors", "future outlook"]`;
 
-    const response = await this.callLLM(prompt);
-    const subtopics = JSON.parse(response.content);
-    return Array.isArray(subtopics) ? subtopics : [topic];
+    try {
+      const response = await this.callLLM(prompt);
+      console.log(`[researcher] Raw LLM response for subtopics:`, response);
+      
+      if (!response || !response.content) {
+        console.warn('[researcher] Empty response from LLM, using fallback subtopics');
+        return [topic, `${topic} trends`, `${topic} applications`, `${topic} future`];
+      }
+
+      const subtopics = JSON.parse(response.content);
+      return Array.isArray(subtopics) ? subtopics : [topic];
+    } catch (error) {
+      console.warn('[researcher] Failed to extract subtopics:', error);
+      return [topic, `${topic} trends`, `${topic} applications`, `${topic} future`];
+    }
   }
 
   private generateSearchQueries(topic: string, subtopics: string[], audience: string): string[] {
@@ -156,12 +168,17 @@ Return as JSON array:
 
     try {
       const response = await this.callLLM(prompt);
-      console.log(`[researcher] Raw response for query "${query}":`, response.content.substring(0, 200) + '...');
+      console.log(`[researcher] Raw response for query "${query}":`, response);
+      
+      if (!response || !response.content) {
+        console.warn(`[researcher] Empty response for query: ${query}`);
+        return [];
+      }
+
       const results = JSON.parse(response.content);
       return Array.isArray(results) ? results : [];
     } catch (error) {
       console.warn(`Search failed for query: ${query}`, error);
-      console.warn(`Response content:`, response?.content?.substring(0, 200) + '...');
       return [];
     }
   }

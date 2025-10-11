@@ -37,7 +37,11 @@ export abstract class BaseAgent {
     }
 
     const response = await this.makeLLMRequest(prompt, options);
-    return this.parseResponse(response);
+    const parsedContent = this.parseResponse(response);
+    return {
+      content: parsedContent,
+      usage: response.usage
+    };
   }
 
   private async makeLLMRequest(prompt: string, options: Record<string, unknown>): Promise<{ content: string; usage?: unknown }> {
@@ -91,6 +95,11 @@ export abstract class BaseAgent {
   protected parseResponse(response: { content: string; usage?: unknown }): string {
     // Default implementation - can be overridden by specific agents
     // Strip markdown code blocks if present
+    if (!response || !response.content) {
+      console.warn(`[${this.config.name}] Empty response from LLM`);
+      return '';
+    }
+    
     let content = response.content.trim();
     if (content.startsWith('```json')) {
       content = content.replace(/^```json\n/, '').replace(/\n```$/, '');
