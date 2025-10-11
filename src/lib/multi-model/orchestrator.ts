@@ -62,10 +62,12 @@ export class MultiModelOrchestrator {
   private router: ModelRouter;
   private agents: Map<string, BaseAgent> = new Map();
   private taskHistory: Map<string, unknown> = new Map();
+  private initializationPromise: Promise<void>;
+  private isInitialized = false;
 
   constructor() {
     this.router = new ModelRouter();
-    this.initializeAgents().catch(console.error);
+    this.initializationPromise = this.initializeAgents();
   }
 
   // ============================================================================
@@ -73,6 +75,11 @@ export class MultiModelOrchestrator {
   // ============================================================================
 
   async generatePresentation(input: OrchestratorInput): Promise<OrchestratorOutput> {
+    // Ensure agents are initialized before proceeding
+    if (!this.isInitialized) {
+      await this.initializationPromise;
+    }
+
     const startTime = Date.now();
     const taskId = `task-${Date.now()}`;
     
@@ -294,9 +301,12 @@ export class MultiModelOrchestrator {
       localOnly: policy === 'local-only',
     };
 
+    console.log(`[Orchestrator] Executing agent: ${agentType}`);
+    console.log(`[Orchestrator] Available agents:`, Array.from(this.agents.keys()));
+
     const agent = this.agents.get(agentType);
     if (!agent) {
-      throw new Error(`Agent not found: ${agentType}`);
+      throw new Error(`Agent not found: ${agentType}. Available agents: ${Array.from(this.agents.keys()).join(', ')}`);
     }
 
     // Select model for this agent
@@ -540,8 +550,10 @@ export class MultiModelOrchestrator {
       this.agents.set('audience-adapter', audienceAdapter);
 
       console.log(`[Orchestrator] Initialized ${this.agents.size} agents`);
+      this.isInitialized = true;
     } catch (error) {
       console.error('[Orchestrator] Failed to initialize agents:', error);
+      this.isInitialized = false;
       throw new Error('Agent initialization failed');
     }
   }

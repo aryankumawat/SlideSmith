@@ -277,15 +277,6 @@ export type AudienceAdaptation = z.infer<typeof AudienceAdaptationSchema>;
 // ============================================================================
 
 // Data Visualization Schemas
-export const ChartSpecSchema = z.object({
-  kind: z.enum(['line', 'bar', 'area', 'pie', 'scatter', 'histogram']),
-  x: z.string(),
-  y: z.string(),
-  title: z.string(),
-  rationale: z.string(),
-  dataExample: z.any().optional(),
-});
-
 export const DataVizInputSchema = z.object({
   analyticalQuestion: z.string(),
   dataSchema: z.record(z.any()),
@@ -303,7 +294,6 @@ export const DataVizOutputSchema = z.object({
   }),
 });
 
-export type ChartSpec = z.infer<typeof ChartSpecSchema>;
 export type DataVizInput = z.infer<typeof DataVizInputSchema>;
 export type DataVizOutput = z.infer<typeof DataVizOutputSchema>;
 
@@ -420,13 +410,6 @@ export type AccessibilityInput = z.infer<typeof AccessibilityInputSchema>;
 export type AccessibilityOutput = z.infer<typeof AccessibilityOutputSchema>;
 
 // Live Widget Schemas
-export const WidgetSpecSchema = z.object({
-  type: z.enum(['chart', 'ticker', 'map', 'countdown', 'iframe']),
-  config: z.record(z.any()),
-  dataSource: z.string().optional(),
-  refreshRate: z.number(),
-});
-
 export const WidgetRecommendationSchema = z.object({
   slideIndex: z.number(),
   widgetSpec: WidgetSpecSchema,
@@ -464,7 +447,6 @@ export const LiveWidgetOutputSchema = z.object({
   }),
 });
 
-export type WidgetSpec = z.infer<typeof WidgetSpecSchema>;
 export type WidgetRecommendation = z.infer<typeof WidgetRecommendationSchema>;
 export type LiveWidgetInput = z.infer<typeof LiveWidgetInputSchema>;
 export type LiveWidgetOutput = z.infer<typeof LiveWidgetOutputSchema>;

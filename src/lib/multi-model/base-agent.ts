@@ -73,7 +73,14 @@ export abstract class BaseAgent {
 
   protected parseResponse(response: { content: string; usage?: unknown }): string {
     // Default implementation - can be overridden by specific agents
-    return response.content;
+    // Strip markdown code blocks if present
+    let content = response.content.trim();
+    if (content.startsWith('```json')) {
+      content = content.replace(/^```json\n/, '').replace(/\n```$/, '');
+    } else if (content.startsWith('```')) {
+      content = content.replace(/^```\n/, '').replace(/\n```$/, '');
+    }
+    return content;
   }
 
   protected validateInput(input: unknown, schema: unknown): boolean {
