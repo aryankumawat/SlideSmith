@@ -19,6 +19,8 @@ interface DeckGeneratorProps {
 
 export default function DeckGenerator({ onGenerate, isLoading = false }: DeckGeneratorProps) {
   const [mode, setMode] = useState<Mode>('quick_prompt');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [formData, setFormData] = useState({
     topic_or_prompt: '',
     instructions: '',
@@ -50,6 +52,31 @@ export default function DeckGenerator({ onGenerate, isLoading = false }: DeckGen
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files);
+    setUploadedFiles(prev => [...prev, ...files]);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -111,11 +138,51 @@ export default function DeckGenerator({ onGenerate, isLoading = false }: DeckGen
                     <label className="block text-sm font-medium mb-2">
                       Upload Documents
                     </label>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <div 
+                      className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                        isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                      }`}
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                    >
                       <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                       <p className="text-gray-600 mb-2">Drop your files here or click to browse</p>
                       <p className="text-sm text-gray-500">Supports PDF, DOCX, MD, XLSX, PPTX</p>
+                      <input
+                        id="file-upload"
+                        type="file"
+                        multiple
+                        accept=".pdf,.docx,.md,.xlsx,.pptx,.doc,.txt"
+                        className="hidden"
+                        onChange={handleFileSelect}
+                      />
                     </div>
+                    
+                    {uploadedFiles.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        {uploadedFiles.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-100 rounded">
+                            <div className="flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-gray-500" />
+                              <span className="text-sm">{file.name}</span>
+                              <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                removeFile(index);
+                              }}
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="instructions" className="block text-sm font-medium mb-2">

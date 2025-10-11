@@ -54,11 +54,51 @@ export default function StudioNewPage() {
     }
   };
 
-  const handleExport = (format: 'pptx' | 'pdf' | 'json') => {
+  const handleExport = async (format: 'pptx' | 'pdf' | 'json') => {
     if (!generatedDeck) return;
     
-    // TODO: Implement actual export functionality
-    console.log(`Exporting as ${format}`, generatedDeck);
+    if (format === 'json') {
+      // Download JSON directly
+      const blob = new Blob([JSON.stringify(generatedDeck, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${generatedDeck.title || 'presentation'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return;
+    }
+    
+    try {
+      const endpoint = format === 'pptx' ? '/api/export/pptx' : '/api/export/pdf';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ deck: generatedDeck }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to export ${format.toUpperCase()}`);
+      }
+
+      // Get the blob and download it
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${generatedDeck.title || 'presentation'}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(`Export failed:`, error);
+      setError(`Failed to export as ${format.toUpperCase()}. Please try again.`);
+    }
   };
 
   return (
