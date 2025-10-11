@@ -44,32 +44,76 @@ export async function generateOutline(params: {
     slides: Array<{
       title: string;
       layout: string;
+      section: string;
     }>;
   }>;
 }> {
-  const prompt = `You are a world-class presentation planner.
-Goal: Turn the USER_INPUT into a clear slide outline.
+  const prompt = `You are a world-class presentation strategist creating engaging, story-driven outlines.
 
-Constraints:
-- Max slides: ${params.slide_count}
+RULES FOR ENGAGING PRESENTATIONS:
+1. **Specific, Action-Oriented Titles**: Don't use generic titles
+   ❌ Bad: "Introduction", "Overview", "Key Points"
+   ✅ Good: "**AI Revolution**: Transforming Healthcare in 2024", "Why **85% of Hospitals** Are Investing in AI"
+
+2. **Story Arc**: Structure slides to tell a compelling story
+   - Hook: Start with a provocative question or statistic
+   - Context: Set the stage with current situation
+   - Insight: Deep dive into 2-3 key areas
+   - Impact: Show results, data, case studies
+   - Action: Clear takeaways and next steps
+
+3. **Visual Variety**: Mix layout types
+   - title_bullets: Most slides (content-heavy)
+   - chart: Data-driven insights (2-3 per deck)
+   - image_full: Powerful visuals for key concepts
+   - quote: Expert opinions or testimonials
+   - two_column: Comparisons (before/after, pros/cons)
+
+4. **Audience-Specific**: Tailor depth and terminology
+   - Executives: ROI, strategy, high-level impact
+   - Technical: Implementation, architecture, specs
+   - General: Simple language, analogies, real-world examples
+   - Students: Educational, step-by-step, interactive
+
+TASK:
+Create an outline for: """${params.topic_or_prompt_or_instructions}"""
+
+CONSTRAINTS:
+- Total slides: ${params.slide_count}
 - Audience: ${params.audience}
 - Tone: ${params.tone}
-- If DOCUMENT_SUMMARY is present, preserve its section order unless the user says otherwise.
-- Prefer concise titles (<50 chars) and 3–5 bullets per slide (<9 words each).
-- Include at least one data/visual slide if tables/data exist.
+- Document summary: ${params.doc_summary_or_empty || 'None provided'}
 
-Inputs:
-USER_INPUT: """${params.topic_or_prompt_or_instructions}"""
-DOCUMENT_SUMMARY: """${params.doc_summary_or_empty}"""
-
-Output JSON with fields:
+OUTPUT FORMAT (JSON only):
 {
-  "title": "...",
+  "title": "**Engaging Main Title** with Topic",
   "sections": [
-    {"name": "...", "slides": [{"title":"...", "layout":"title|title_bullets|two_column|chart|image_full|quote"}]}
+    {
+      "name": "Hook & Context",
+      "slides": [
+        {"title": "Provocative opening question or stat", "layout": "title_bullets", "section": "Hook & Context"},
+        {"title": "Current landscape", "layout": "title_bullets", "section": "Hook & Context"}
+      ]
+    },
+    {
+      "name": "Deep Dive",
+      "slides": [
+        {"title": "First key area with specifics", "layout": "title_bullets", "section": "Deep Dive"},
+        {"title": "Data visualization", "layout": "chart", "section": "Deep Dive"},
+        {"title": "Second key area", "layout": "title_bullets", "section": "Deep Dive"}
+      ]
+    },
+    {
+      "name": "Impact & Action",
+      "slides": [
+        {"title": "Results and outcomes", "layout": "title_bullets", "section": "Impact & Action"},
+        {"title": "Key takeaways", "layout": "title_bullets", "section": "Impact & Action"}
+      ]
+    }
   ]
 }
-Return ONLY valid JSON.`;
+
+Return ONLY valid JSON with specific, engaging titles for the given topic.`;
 
   try {
     const response = await llmClient.generateContent(prompt);
@@ -78,29 +122,31 @@ Return ONLY valid JSON.`;
     return parsed;
   } catch (error) {
     console.error('Outline generation failed:', error);
-    // Fallback outline
+    // Enhanced fallback with topic-specific content
+    const topic = params.topic_or_prompt_or_instructions;
     return {
-      title: 'Generated Presentation',
+      title: `**${topic}**: Key Insights & Analysis`,
       sections: [
         {
-          name: 'Introduction',
+          name: 'Opening',
           slides: [
-            { title: 'Welcome', layout: 'title' },
-            { title: 'Agenda', layout: 'title_bullets' }
+            { title: `**${topic}**: What You Need to Know`, layout: 'title_bullets', section: 'Opening' },
+            { title: 'Current State & Trends 📊', layout: 'title_bullets', section: 'Opening' }
           ]
         },
         {
-          name: 'Main Content',
+          name: 'Analysis',
           slides: [
-            { title: 'Key Points', layout: 'title_bullets' },
-            { title: 'Data Overview', layout: 'chart' }
+            { title: 'Key Challenges & Opportunities 💡', layout: 'title_bullets', section: 'Analysis' },
+            { title: 'Data-Driven Insights', layout: 'chart', section: 'Analysis' },
+            { title: 'Best Practices & Solutions 🚀', layout: 'title_bullets', section: 'Analysis' }
           ]
         },
         {
           name: 'Conclusion',
           slides: [
-            { title: 'Summary', layout: 'title_bullets' },
-            { title: 'Thank You', layout: 'title' }
+            { title: 'Impact & Results 🎯', layout: 'title_bullets', section: 'Conclusion' },
+            { title: 'Next Steps & Takeaways', layout: 'title_bullets', section: 'Conclusion' }
           ]
         }
       ]
@@ -117,36 +163,111 @@ export async function generateSlide(params: {
   notes: string;
   chart_spec: any;
   citations: string[];
+  image?: {
+    prompt: string;
+    alt: string;
+    source: string;
+  };
 }> {
-  const prompt = `You write crisp, high-signal slide content from an outline.
-Rules:
-- 3–5 bullets, each < 9 words.
-- No fluff, no repetition.
-- Add "notes" for speaker (~40-90 words).
-- If layout is "chart", propose "chart_spec" with type and fields.
+  const prompt = `You are an expert presentation designer creating engaging, visual slides.
 
-Inputs:
-SLIDE_CONTEXT: ${JSON.stringify(params.slide_context)}
+CRITICAL RULES FOR ENGAGING CONTENT:
+1. **Use Bold Text**: Wrap key terms in **double asterisks** for emphasis
+   Example: "**AI-powered diagnostics** reduce errors by 40%"
+
+2. **Use Emojis**: Add relevant emojis to bullets for visual interest
+   - 📊 for data/statistics
+   - 💡 for ideas/insights  
+   - 🚀 for growth/innovation
+   - ⚡ for speed/efficiency
+   - 🎯 for goals/targets
+   - 💰 for money/savings
+   - 🔒 for security
+   - 🌍 for global/environment
+
+3. **Specific Data**: Include real numbers, percentages, dates
+   Bad: "AI is growing fast"
+   Good: "**85% of hospitals** adopted AI by 2024 📈"
+
+4. **Visual Descriptions**: Add image details for EVERY slide
+   - Describe relevant diagrams, charts, icons, or photos
+   - Make it topic-specific and professional
+
+5. **Rich Speaker Notes**: 60-100 words with storytelling, examples, transitions
+
+SLIDE TO GENERATE:
+Title: ${params.slide_context.title}
+Layout: ${params.slide_context.layout}
+Section: ${params.slide_context.section || 'Main Content'}
+
 DOCUMENT_FACTS: """${params.per_slide_extracted_text_or_empty}"""
 
-Output JSON schema:
-{ "title":"", "bullets":[], "notes":"", "chart_spec":null, "citations":[] }
-Return ONLY JSON.`;
+OUTPUT REQUIREMENTS:
+- title: Engaging, specific title (use **bold** for key words)
+- bullets: 3-5 bullets with emojis, bold text, and specific data
+- notes: Rich speaker notes with transitions and examples (60-100 words)
+- image: Always include! Describe a relevant visual element
+  {
+    "prompt": "Detailed description of diagram/chart/icon that illustrates this slide's concept",
+    "alt": "Brief alt text",
+    "source": "placeholder"
+  }
+- chart_spec: If layout includes "chart", add chart data
+- citations: Empty array []
+
+Output JSON:
+{
+  "title": "**Bold Title** with Emphasis",
+  "bullets": [
+    "🚀 **Bold term**: specific detail with data",
+    "📊 Another point with **emphasis** and numbers"
+  ],
+  "notes": "Detailed speaker notes...",
+  "image": {
+    "prompt": "Professional diagram showing...",
+    "alt": "Diagram of...",
+    "source": "placeholder"
+  },
+  "chart_spec": null,
+  "citations": []
+}
+
+Return ONLY valid JSON.`;
 
   try {
     const response = await llmClient.generateContent(prompt);
     const cleaned = cleanJSONResponse(response);
     const parsed = JSON.parse(cleaned);
+    
+    // Ensure image is always present
+    if (!parsed.image) {
+      parsed.image = {
+        prompt: `Professional ${params.slide_context.title} diagram with modern, clean design`,
+        alt: `Visual representation of ${params.slide_context.title}`,
+        source: 'placeholder'
+      };
+    }
+    
     return parsed;
   } catch (error) {
     console.error('Slide generation failed:', error);
-    // Fallback slide
+    // Enhanced fallback with more engaging content
+    const topic = params.slide_context.title || 'Key Concepts';
     return {
-      title: params.slide_context.title || 'Sample Slide',
-      bullets: ['Key point 1', 'Key point 2', 'Key point 3'],
-      notes: 'Speaker notes for this slide',
+      title: `**${topic}**: Overview`,
+      bullets: [
+        `🎯 **Core Concept**: ${topic} fundamentals`,
+        `📊 **Key Metrics**: Measurable outcomes`,
+        `💡 **Innovation**: Latest developments`
+      ],
+      notes: `This slide covers the essential aspects of ${topic}. Start by introducing the core concept, then discuss key metrics that demonstrate impact. Highlight recent innovations and developments in this area. Engage the audience with specific examples and encourage questions.`,
       chart_spec: null,
-      citations: []
+      citations: [],
+      image: {
+        prompt: `Modern infographic showing ${topic} with icons, arrows, and data visualizations in a clean, professional style`,
+        alt: `${topic} concept diagram`,
+        source: 'placeholder'
+      }
     };
   }
 }

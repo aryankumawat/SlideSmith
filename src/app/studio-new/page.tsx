@@ -203,51 +203,82 @@ export default function StudioNewPage() {
 
             {/* Slides Preview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {generatedDeck.slides.map((slide, index) => (
-                <Card key={index} className="h-64 overflow-hidden">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg line-clamp-2">{slide.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {slide.bullets && slide.bullets.length > 0 && (
-                        <ul className="text-sm space-y-1">
-                          {slide.bullets.slice(0, 3).map((bullet, bulletIndex) => (
-                            <li key={bulletIndex} className="flex items-start">
-                              <span className="text-gray-400 mr-2">•</span>
-                              <span className="line-clamp-2">{bullet}</span>
-                            </li>
-                          ))}
-                          {slide.bullets.length > 3 && (
-                            <li className="text-gray-500 text-xs">
-                              +{slide.bullets.length - 3} more points
-                            </li>
-                          )}
-                        </ul>
-                      )}
-                      
-                      {slide.notes && (
-                        <div className="mt-3 p-2 bg-gray-100 rounded text-xs">
-                          <strong>Notes:</strong> {slide.notes.substring(0, 100)}
-                          {slide.notes.length > 100 && '...'}
-                        </div>
-                      )}
-                      
-                      {slide.chart_spec && (
-                        <div className="mt-2 p-2 bg-blue-50 rounded text-xs">
-                          <strong>Chart:</strong> {slide.chart_spec.type}
-                        </div>
-                      )}
-                      
-                      {slide.image && (
-                        <div className="mt-2 p-2 bg-green-50 rounded text-xs">
-                          <strong>Image:</strong> {slide.image.alt}
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {generatedDeck.slides.map((slide, index) => {
+                // Helper function to render text with bold markdown
+                const renderMarkdown = (text: string) => {
+                  const parts = text.split(/(\*\*.*?\*\*)/g);
+                  return parts.map((part, i) => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                      return <strong key={i} className="text-blue-600">{part.slice(2, -2)}</strong>;
+                    }
+                    return <span key={i}>{part}</span>;
+                  });
+                };
+
+                return (
+                  <Card key={index} className="h-auto min-h-64 overflow-hidden border-2 hover:border-blue-400 transition-colors">
+                    <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-purple-50">
+                      <CardTitle className="text-base font-semibold leading-tight">
+                        {renderMarkdown(slide.title)}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <div className="space-y-3">
+                        {/* Bullets with emoji and bold support */}
+                        {slide.bullets && slide.bullets.length > 0 && (
+                          <ul className="text-sm space-y-2">
+                            {slide.bullets.map((bullet, bulletIndex) => (
+                              <li key={bulletIndex} className="flex items-start gap-2">
+                                <span className="text-gray-400 shrink-0 mt-0.5">▸</span>
+                                <span className="leading-relaxed">
+                                  {renderMarkdown(bullet)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        
+                        {/* Image/Visual indicator with icon */}
+                        {slide.image && (
+                          <div className="mt-3 p-3 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                            <div className="flex items-start gap-2">
+                              <span className="text-lg">🎨</span>
+                              <div className="text-xs flex-1">
+                                <strong className="text-purple-700 block mb-1">Visual Element:</strong>
+                                <p className="text-gray-600 leading-relaxed">{slide.image.prompt}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Chart indicator */}
+                        {slide.chart_spec && (
+                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs border border-blue-200">
+                            <span className="text-base mr-1">📊</span>
+                            <strong className="text-blue-700">Chart:</strong> {slide.chart_spec.type}
+                          </div>
+                        )}
+                        
+                        {/* Speaker notes preview */}
+                        {slide.notes && (
+                          <div className="mt-3 p-2 bg-amber-50 rounded text-xs border border-amber-200">
+                            <div className="flex items-start gap-1">
+                              <span className="text-base">💬</span>
+                              <div className="flex-1">
+                                <strong className="text-amber-700">Notes:</strong>{' '}
+                                <span className="text-gray-600">
+                                  {slide.notes.substring(0, 120)}
+                                  {slide.notes.length > 120 && '...'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Export Options */}
