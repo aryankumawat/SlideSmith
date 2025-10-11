@@ -78,10 +78,11 @@ Input → Research → Structure → Generate → [QA Pipeline] → Enhance → 
 
 ### Rendering & Export
 - **UI Framework**: React 18, Tailwind CSS, shadcn/ui
-- **Data Visualization**: Recharts (composable chart library)
-- **PDF Generation**: PDFKit with theme-aware rendering
-- **PPTX Export**: PptxGenJS with layout preservation
-- **Image Integration**: Unsplash API (dynamic content-aware sourcing)
+- **Data Visualization**: Recharts (composable chart library) + Native PowerPoint charts
+- **PDF Generation**: PDFKit with theme-aware rendering and smart text wrapping
+- **PPTX Export**: Advanced PptxGenJS engine with **native chart rendering** (line, bar, pie, area, scatter)
+- **Image Integration**: Unsplash API (dynamic content-aware sourcing with keyword extraction)
+- **Text Handling**: Intelligent word-wrap algorithms (no truncation, preserves full content)
 
 ### Quality Assurance
 - **Schema Validation**: Zod-based input/output contracts
@@ -221,14 +222,40 @@ npm run dev
 ### Export Endpoints
 
 **PDF Export:** `POST /api/export/pdf`
-- Landscape format (11" × 8.5")
-- Theme-aware rendering
-- Embedded fonts and colors
+- Landscape format (11" × 8.5") with adaptive page layout
+- Full theme-aware rendering (background, text, primary colors)
+- Smart text wrapping (no truncation, preserves full bullet content)
+- Dynamic spacing based on content density
+- Embedded fonts and slide numbers
+- Footer with presentation title
 
-**PPTX Export:** `POST /api/export/pptx`
-- PowerPoint 2016+ compatible
-- Layout preservation
-- Speaker notes included
+**PPTX Export:** `POST /api/export/pptx` ✨ **Advanced Engine**
+- PowerPoint 2016+ compatible with native chart support
+- **Native Chart Rendering**: Line, bar, pie, area, scatter, doughnut charts
+- **Smart Text Wrapping**: Word-boundary wrapping algorithm (no "..." truncation)
+- **Layout Intelligence**: Automatic chart + bullets layout optimization
+- **Theme Consistency**: All 5 themes applied to charts and backgrounds
+- **Image Embedding**: Unsplash images embedded directly
+- **Speaker Notes**: Full presenter guidance preserved
+- **Editable Charts**: Charts are native PowerPoint objects (fully editable)
+
+**Advanced PPTX Features:**
+```typescript
+// Native chart rendering
+slide.addChart(pptx.ChartType.bar, chartData, {
+  x: 0.5, y: 1.2, w: 6, h: 3.8,
+  chartColors: [themeColors.primary, themeColors.accent, ...],
+  showLegend: true,
+  catAxisTitle: "Quarter",
+  valAxisTitle: "Revenue ($M)"
+});
+
+// Smart text wrapping (no truncation)
+const wrapped = wrapText(bullet, 100); // Word-boundary wrapping
+slide.addText(wrapped, { 
+  wrap: true,  // Enable wrapping
+  fontSize: dynamicSize,  // Adaptive sizing
+});
 
 ---
 
@@ -283,6 +310,7 @@ src/
 │   │
 │   ├── llm.ts                       # LLM provider abstraction
 │   ├── deck-generator.ts            # Simplified generation pipeline
+│   ├── pptx-advanced-exporter.ts    # 🆕 Advanced PPTX engine (native charts, wrapping)
 │   ├── schema.ts                    # Core TypeScript types
 │   ├── theming.ts                   # Theme system
 │   ├── storage.ts                   # Client-side persistence
