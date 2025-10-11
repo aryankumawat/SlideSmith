@@ -8,7 +8,7 @@ A production-ready, distributed multi-agent system for automated slide deck gene
 
 ## System Overview
 
-SlideSmith implements a **12-agent collaborative pipeline** using LLM orchestration patterns to transform unstructured input into production-ready presentation decks. The system employs intelligent model routing, parallel execution, and comprehensive validation to ensure output quality while optimizing for latency and cost.
+SlideSmith implements a **13-agent collaborative pipeline** using LLM orchestration patterns to transform unstructured input into production-ready presentation decks. The system employs intelligent model routing, parallel execution, and comprehensive validation to ensure output quality while optimizing for latency and cost.
 
 ### Key Architecture Components
 
@@ -24,7 +24,7 @@ SlideSmith implements a **12-agent collaborative pipeline** using LLM orchestrat
 
 ### Multi-Agent Pipeline
 
-The system orchestrates 12 specialized agents in a directed acyclic graph (DAG) workflow:
+The system orchestrates 13 specialized agents in a directed acyclic graph (DAG) workflow:
 
 | **Agent** | **Function** | **Execution Context** | **Model Policy** |
 |-----------|--------------|----------------------|------------------|
@@ -129,10 +129,10 @@ npm >= 9.0.0
 
 ### Local Development Setup
 
-```bash
+   ```bash
 # Clone repository
-git clone <repository-url>
-cd slidesmith
+   git clone <repository-url>
+   cd slidesmith
 
 # Install dependencies
 npm install
@@ -152,7 +152,7 @@ LLM_MODEL=phi4
 ```
 
 **Ollama Setup:**
-```bash
+   ```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
@@ -170,17 +170,17 @@ ollama pull gemma3:4b         # Fast generation (4B parameters)
 
 #### OpenAI (Cloud Deployment)
 
-```env
-LLM_PROVIDER=openai
+   ```env
+   LLM_PROVIDER=openai
 LLM_API_KEY=sk-...
 LLM_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4
-```
+   LLM_MODEL=gpt-4
+   ```
 
 ### Launch Application
 
-```bash
-npm run dev
+   ```bash
+   npm run dev
 # Access: http://localhost:3000
 ```
 
@@ -350,7 +350,7 @@ src/
 
 - **`app/api/multi-model-generate/`** - Full multi-agent pipeline with Researcher, Structurer, Slidewriter, and QA agents
 - **`app/api/generate-deck/`** - Streamlined single-pass generation for quick prototypes
-- **`lib/multi-model/agents/`** - 12 specialized agents (Researcher, Structurer, Slidewriter, Copy Tightener, Fact Checker, Accessibility Linter, Media Finder, Speaker Notes, Data Viz Planner, Live Widget Planner, Executive Summary, Audience Adapter, Readability Analyzer)
+- **`lib/multi-model/agents/`** - 13 specialized agents (Researcher, Structurer, Slidewriter, Copy Tightener, Fact Checker, Accessibility Linter, Media Finder, Speaker Notes Generator, Data Viz Planner, Live Widget Planner, Executive Summary, Audience Adapter, Readability Analyzer)
 - **`lib/pptx-advanced-exporter.ts`** - Native chart rendering, smart text wrapping, theme-aware PPTX generation
 - **`components/blocks/`** - Reusable slide content primitives (Heading, Bullets, Chart, Image, Code, Quote)
 - **`components/live-widgets/`** - Real-time data visualization (LiveChart, Ticker, Map, Countdown, Iframe)
@@ -359,7 +359,7 @@ src/
 
 Agents communicate through a structured message passing system:
 
-```typescript
+   ```typescript
 interface AgentMessage {
   input: InputSchema;    // Zod-validated input
   context?: Record<string, unknown>;  // Shared context
@@ -387,56 +387,51 @@ interface AgentResponse {
 
 ---
 
-## Deployment
+## Running the Application
 
-### Production Deployment (Vercel)
-
-```bash
-# Connect GitHub repository
-vercel link
-
-# Configure environment variables
-vercel env add LLM_PROVIDER
-vercel env add LLM_API_KEY
-vercel env add LLM_BASE_URL
-vercel env add LLM_MODEL
-
-# Deploy
-vercel --prod
-```
-
-**Configuration Notes:**
-- For Ollama: Deploy alongside edge function or use external Ollama service
-- For OpenAI: Set API key in environment variables
-- Enable edge functions for reduced latency
-
-### Docker Deployment
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
+### Start Development Server
 
 ```bash
-docker build -t slidesmith .
-docker run -p 3000:3000 \
-  -e LLM_PROVIDER=ollama \
-  -e LLM_BASE_URL=http://host.docker.internal:11434 \
-  slidesmith
+# Ensure Ollama is running
+ollama serve
+
+# Start Next.js dev server
+npm run dev
 ```
 
-### Scaling Considerations
+Access the application:
+- **Modern UI**: http://localhost:3000/studio-new
+- **Legacy UI**: http://localhost:3000/studio
+- **API Docs**: http://localhost:3000/api
 
-- **Horizontal Scaling**: Stateless Next.js instances behind load balancer
-- **LLM Backend**: Separate Ollama service cluster or OpenAI API
-- **Caching Layer**: Redis for research snippets and outline caching
-- **Storage**: S3-compatible object storage for generated presentations
+### Production Build
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
+### Configuration Options
+
+**LLM Provider Selection:**
+```bash
+# Use Ollama (recommended for local development)
+LLM_PROVIDER=ollama
+LLM_BASE_URL=http://localhost:11434
+LLM_MODEL=gemma3:4b
+
+# Or use OpenAI (requires API key)
+LLM_PROVIDER=openai
+LLM_API_KEY=your-api-key-here
+LLM_MODEL=gpt-4
+```
+
+**Available Models (Ollama):**
+- `phi4:latest` - High-quality research and planning (14B parameters)
+- `gemma3:4b` - Fast content generation (4B parameters)
 
 ---
 
@@ -452,7 +447,7 @@ docker run -p 3000:3000 \
 
 ### Metrics Tracking
 
-```typescript
+   ```typescript
 interface QualityMetrics {
   factualAccuracy: number;      // 0-1 confidence score
   accessibilityScore: number;   // 0-100 compliance score
@@ -476,8 +471,8 @@ interface QualityMetrics {
 ### Compliance
 
 - **GDPR**: No personal data collection or processing
-- **SOC 2**: Infrastructure-level compliance (Vercel/AWS)
-- **Encryption**: TLS 1.3 for all API communication
+- **Local-First**: All processing can be done entirely offline with Ollama
+- **Encryption**: TLS 1.3 for external API communication when using cloud providers
 
 ---
 
@@ -531,9 +526,9 @@ To add a new agent:
 
 ### Q2 2025
 - [ ] Multi-user collaboration (operational transform)
-- [ ] Enterprise SSO integration (SAML, OAuth)
 - [ ] Advanced analytics dashboard
 - [ ] Custom model fine-tuning pipeline
+- [ ] Batch processing for multiple presentations
 
 ### Q3 2025
 - [ ] Multi-language support (i18n)
@@ -549,9 +544,8 @@ MIT License - See [LICENSE](LICENSE) for details
 
 ## Support & Documentation
 
-- **Technical Documentation**: [/docs](./docs)
-- **API Reference**: [/docs/api](./docs/api)
-- **Architecture Diagrams**: [/docs/architecture](./docs/architecture)
+- **Setup Guide**: [SETUP.md](./SETUP.md)
+- **API Reference**: Built-in endpoints at `/api`
 - **Issue Tracker**: GitHub Issues
 - **Discussions**: GitHub Discussions
 
@@ -559,4 +553,4 @@ MIT License - See [LICENSE](LICENSE) for details
 
 **Version**: 2.0.0  
 **Last Updated**: 2025-10-12  
-**Maintainer**: SlideSmith Development Team
+**License**: MIT
