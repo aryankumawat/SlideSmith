@@ -17,6 +17,20 @@ const getLLMConfig = (): LLMConfig => {
 
 const llmClient = new LLMClient(getLLMConfig());
 
+// Helper function to clean markdown-wrapped JSON from LLM responses
+function cleanJSONResponse(response: string): string {
+  let cleaned = response.trim();
+  
+  // Remove markdown code blocks
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\n/, '').replace(/\n```$/, '');
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\n/, '').replace(/\n```$/, '');
+  }
+  
+  return cleaned.trim();
+}
+
 export async function generateOutline(params: {
   slide_count: number;
   audience: string;
@@ -59,7 +73,8 @@ Return ONLY valid JSON.`;
 
   try {
     const response = await llmClient.generateContent(prompt);
-    const parsed = JSON.parse(response);
+    const cleaned = cleanJSONResponse(response);
+    const parsed = JSON.parse(cleaned);
     return parsed;
   } catch (error) {
     console.error('Outline generation failed:', error);
@@ -120,7 +135,8 @@ Return ONLY JSON.`;
 
   try {
     const response = await llmClient.generateContent(prompt);
-    const parsed = JSON.parse(response);
+    const cleaned = cleanJSONResponse(response);
+    const parsed = JSON.parse(cleaned);
     return parsed;
   } catch (error) {
     console.error('Slide generation failed:', error);
@@ -156,7 +172,8 @@ Output:
 
   try {
     const response = await llmClient.generateContent(prompt);
-    const parsed = JSON.parse(response);
+    const cleaned = cleanJSONResponse(response);
+    const parsed = JSON.parse(cleaned);
     return parsed;
   } catch (error) {
     console.error('Visual generation failed:', error);
