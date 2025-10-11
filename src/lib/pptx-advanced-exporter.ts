@@ -57,6 +57,10 @@ interface ThemeColors {
  * Main export function
  */
 export async function exportToAdvancedPPTX(deck: Deck): Promise<Buffer> {
+  console.log('[Advanced PPTX] Starting export for deck:', deck.title);
+  console.log('[Advanced PPTX] Slide count:', deck.slides?.length || 0);
+  console.log('[Advanced PPTX] First slide sample:', JSON.stringify(deck.slides?.[0], null, 2));
+  
   const pptx = new PptxGenJS();
   
   // Set presentation properties
@@ -68,12 +72,22 @@ export async function exportToAdvancedPPTX(deck: Deck): Promise<Buffer> {
   
   // Get theme colors
   const themeColors = getThemeColors(deck.theme || 'deep_space');
+  console.log('[Advanced PPTX] Theme colors:', themeColors);
   
   // Process each slide
-  for (const slide of deck.slides) {
+  for (let i = 0; i < deck.slides.length; i++) {
+    const slide = deck.slides[i];
+    console.log(`[Advanced PPTX] Processing slide ${i + 1}:`, {
+      title: slide.title,
+      hasBullets: !!slide.bullets,
+      bulletCount: slide.bullets?.length || 0,
+      hasChart: !!slide.chart_spec,
+      hasImage: !!slide.image,
+    });
     await addAdvancedSlide(pptx, slide, themeColors);
   }
   
+  console.log('[Advanced PPTX] Export complete, generating buffer...');
   // Generate buffer
   const buffer = await pptx.write({ outputType: 'nodebuffer' });
   return Buffer.from(buffer as any);
@@ -169,17 +183,20 @@ function addNativeChart(
   chartSpec: ChartSpec,
   themeColors: ThemeColors
 ): void {
+  // Import chart types from PptxGenJS
+  const PptxGenJS = require('pptxgenjs');
+  
   // Map our chart types to PptxGenJS chart types
   const chartTypeMap: Record<string, any> = {
-    line: pptx.ChartType.line,
-    bar: pptx.ChartType.bar,
-    pie: pptx.ChartType.pie,
-    area: pptx.ChartType.area,
-    scatter: pptx.ChartType.scatter,
-    doughnut: pptx.ChartType.doughnut,
+    line: PptxGenJS.ChartType.line,
+    bar: PptxGenJS.ChartType.bar,
+    pie: PptxGenJS.ChartType.pie,
+    area: PptxGenJS.ChartType.area,
+    scatter: PptxGenJS.ChartType.scatter,
+    doughnut: PptxGenJS.ChartType.doughnut,
   };
   
-  const chartType = chartTypeMap[chartSpec.kind] || pptx.ChartType.bar;
+  const chartType = chartTypeMap[chartSpec.kind] || PptxGenJS.ChartType.bar;
   
   // Prepare chart data
   const chartData: any[] = [];
