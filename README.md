@@ -47,54 +47,43 @@ The system orchestrates 12 specialized agents in a directed acyclic graph (DAG) 
 
 ```mermaid
 graph TD
-    A[User Input<br/>Topic, Audience, Tone] --> B[Researcher Agent<br/>Phi-4 14B]
-    B -->|Research Snippets| C[Structurer Agent<br/>Gemma3 4B]
-    C -->|Outline & Sections| D[Slidewriter Agent<br/>Gemma3 4B<br/>Parallel Generation]
+    A[User Input] --> B[Researcher<br/>Phi-4 14B]
+    B --> C[Structurer<br/>Gemma3 4B]
+    C --> D[Slidewriter<br/>Gemma3 4B]
     
-    D --> E[Quality Assurance Pipeline]
+    D --> E[QA Pipeline]
     
     E --> F1[Fact Checker<br/>Gemma3 4B]
     E --> F2[Accessibility Linter<br/>Gemma3 4B]
     E --> F3[Readability Analyzer<br/>Gemma3 4B]
     E --> F4[Copy Tightener<br/>Gemma3 4B]
     
-    F1 --> G[QA Results Merge]
+    F1 --> G[QA Merge]
     F2 --> G
     F3 --> G
     F4 --> G
     
-    G --> H[Enhancement Pipeline]
+    G --> H[Enhancement]
     
-    H --> I1[Media Finder<br/>Image Sourcing]
-    H --> I2[Speaker Notes<br/>Generator]
-    H --> I3[Widget Planner<br/>Live Data]
-    H --> I4[Data Viz Planner<br/>Chart Selection]
+    H --> I1[Media Finder]
+    H --> I2[Speaker Notes]
+    H --> I3[Widget Planner]
+    H --> I4[Data Viz Planner]
     
-    I1 --> J[Content Assembly]
+    I1 --> J[Assembly]
     I2 --> J
     I3 --> J
     I4 --> J
     
-    J --> K[Export Engine]
+    J --> K[Export]
     
-    K --> L1[PDF Export<br/>PDFKit + Themes]
-    K --> L2[PPTX Export<br/>Native Charts + Wrapping]
-    K --> L3[JSON Export<br/>Raw Data]
+    K --> L1[PDF]
+    K --> L2[PPTX]
+    K --> L3[JSON]
     
-    L1 --> M[Final Output]
+    L1 --> M[Output]
     L2 --> M
     L3 --> M
-    
-    style A fill:#e1f5ff
-    style B fill:#fff4e6
-    style C fill:#fff4e6
-    style D fill:#fff4e6
-    style E fill:#f3e5f5
-    style G fill:#f3e5f5
-    style H fill:#e8f5e9
-    style J fill:#e8f5e9
-    style K fill:#fce4ec
-    style M fill:#e0f2f1
 ```
 
 **Performance Characteristics:**
@@ -109,110 +98,38 @@ graph TD
 
 ```mermaid
 graph TB
-    subgraph Client["🖥️ CLIENT LAYER (Browser)"]
-        UI1[Landing Page]
-        UI2[Studio Legacy]
-        UI3[Studio New]
-        UI4[Canvas Renderer]
-        Storage[(IndexedDB<br/>Client Storage)]
-        
-        UI1 -.-> Storage
-        UI2 -.-> Storage
-        UI3 -.-> Storage
-        UI4 -.-> Storage
-    end
+    Client[Client Layer<br/>React + Next.js] --> API[API Layer<br/>/api/generate-deck<br/>/api/multi-model-generate]
     
-    subgraph API["⚙️ APPLICATION LAYER (Next.js API)"]
-        API1[/api/generate-deck<br/>Simplified]
-        API2[/api/multi-model-generate<br/>Full Pipeline]
-        API3[/api/export/pdf]
-        API4[/api/export/pptx]
-        
-        subgraph Orchestration["🎯 ORCHESTRATION"]
-            ORCH1[deck-generator.ts<br/>Stream Pipeline]
-            ORCH2[orchestrator.ts<br/>Multi-Agent DAG]
-            
-            LLM[llm.ts<br/>Provider Router]
-        end
-        
-        API1 --> ORCH1
-        API2 --> ORCH2
-        ORCH1 --> LLM
-        ORCH2 --> LLM
-        
-        subgraph Agents["🤖 AGENT LAYER"]
-            A1[Researcher]
-            A2[Structurer]
-            A3[Slidewriter]
-            A4[Fact Checker]
-            A5[Copy Tightener]
-            A6[Accessibility<br/>Linter]
-            A7[Media Finder]
-            A8[Speaker Notes]
-            A9[Readability<br/>Analyzer]
-        end
-        
-        ORCH2 --> A1
-        ORCH2 --> A2
-        ORCH2 --> A3
-        ORCH2 --> A4
-        ORCH2 --> A5
-        ORCH2 --> A6
-        ORCH2 --> A7
-        ORCH2 --> A8
-        ORCH2 --> A9
-        
-        subgraph Export["📦 EXPORT LAYER"]
-            EXP1[PDFKit<br/>Theme Render]
-            EXP2[PptxGenJS<br/>Native Charts]
-            EXP3[JSON Serializer]
-        end
-        
-        API3 --> EXP1
-        API4 --> EXP2
-    end
+    API --> Orchestrator[Orchestrator<br/>Multi-Agent DAG]
     
-    subgraph LLMProviders["🧠 LLM PROVIDER LAYER"]
-        OLLAMA[Ollama Local<br/>Port: 11434]
-        OPENAI[OpenAI Cloud<br/>api.openai.com]
-        
-        subgraph OllamaModels["Ollama Models"]
-            PHI4[Phi-4 14B]
-            GEMMA[Gemma3 4B]
-        end
-        
-        subgraph OpenAIModels["OpenAI Models"]
-            GPT4[GPT-4]
-            GPT35[GPT-3.5-Turbo]
-        end
-        
-        OLLAMA --> PHI4
-        OLLAMA --> GEMMA
-        OPENAI --> GPT4
-        OPENAI --> GPT35
-    end
+    Orchestrator --> A1[Researcher<br/>Phi-4 14B]
+    Orchestrator --> A2[Structurer<br/>Gemma3 4B]
+    Orchestrator --> A3[Slidewriter<br/>Gemma3 4B]
+    Orchestrator --> A4[Fact Checker<br/>Gemma3 4B]
+    Orchestrator --> A5[Copy Tightener<br/>Gemma3 4B]
+    Orchestrator --> A6[Accessibility Linter<br/>Gemma3 4B]
+    Orchestrator --> A7[Media Finder]
+    Orchestrator --> A8[Speaker Notes]
+    Orchestrator --> A9[Readability Analyzer<br/>Gemma3 4B]
     
-    subgraph External["🌐 EXTERNAL SERVICES"]
-        UNSPLASH[Unsplash API<br/>Image Sourcing]
-    end
+    A1 --> LLM[LLM Provider<br/>Ollama/OpenAI]
+    A2 --> LLM
+    A3 --> LLM
+    A4 --> LLM
+    A5 --> LLM
+    A6 --> LLM
+    A9 --> LLM
     
-    UI1 -->|HTTPS/TLS 1.3| API1
-    UI2 -->|HTTPS/TLS 1.3| API2
-    UI3 -->|HTTPS/TLS 1.3| API1
-    UI4 -->|HTTPS/TLS 1.3| API3
+    LLM --> Ollama[Ollama Local<br/>Phi-4 + Gemma3]
+    LLM --> OpenAI[OpenAI Cloud<br/>GPT-4 + GPT-3.5]
     
-    LLM --> OLLAMA
-    LLM --> OPENAI
+    Orchestrator --> Export[Export Layer]
     
-    A7 -.->|Keyword Search| UNSPLASH
+    Export --> PDF[PDFKit]
+    Export --> PPTX[PptxGenJS]
+    Export --> JSON[JSON]
     
-    style Client fill:#e3f2fd
-    style API fill:#fff3e0
-    style LLMProviders fill:#f3e5f5
-    style External fill:#e8f5e9
-    style Orchestration fill:#fff9c4
-    style Agents fill:#ffe0b2
-    style Export fill:#fce4ec
+    A7 --> Unsplash[Unsplash API]
 ```
 
 ---
@@ -496,59 +413,47 @@ interface AgentResponse {
 
 ```mermaid
 flowchart TD
-    Start([📝 User Input<br/>Topic, Audience, Tone]) --> Init[⚙️ Phase 1: INITIALIZATION<br/>Load configs, Select policy<br/>Initialize LLM client<br/>⏱️ ~1s]
+    Start[User Input] --> Init[Phase 1: Init<br/>1s]
     
-    Init --> Research[🔍 Phase 2: RESEARCH<br/>Researcher Agent Phi-4 14B<br/>Extract subtopics<br/>Search & validate sources<br/>Generate research snippets<br/>⏱️ ~30s]
+    Init --> Research[Phase 2: Research<br/>Researcher Phi-4 14B<br/>30s]
     
-    Research -->|Research Snippets<br/>id, source, text, tags| Structure[📋 Phase 3: STRUCTURE<br/>Structurer Agent Gemma3 4B<br/>Generate narrative arc<br/>Create sections<br/>Optimize flow<br/>⏱️ ~12s]
+    Research --> Structure[Phase 3: Structure<br/>Structurer Gemma3 4B<br/>12s]
     
-    Structure -->|Outline<br/>sections, keyPoints| Generate[✍️ Phase 4: GENERATION<br/>Slidewriter Agent Gemma3 4B<br/>Parallel per section<br/>Generate slide blocks<br/>Map citations<br/>⏱️ ~60s]
+    Structure --> Generate[Phase 4: Generation<br/>Slidewriter Gemma3 4B<br/>60s]
     
-    Generate --> QA[🔍 Phase 5: QA PIPELINE<br/>Parallel Execution<br/>⏱️ ~15s]
+    Generate --> QA[Phase 5: QA Pipeline<br/>15s]
     
-    QA --> QA1[Fact Checker<br/>Verify claims<br/>Map citations]
-    QA --> QA2[Accessibility Linter<br/>WCAG check<br/>Contrast analysis]
-    QA --> QA3[Readability Analyzer<br/>Grade level<br/>Complexity score]
-    QA --> QA4[Copy Tightener<br/>Tone consistency<br/>Terminology]
+    QA --> QA1[Fact Checker<br/>Gemma3 4B]
+    QA --> QA2[Accessibility Linter<br/>Gemma3 4B]
+    QA --> QA3[Readability Analyzer<br/>Gemma3 4B]
+    QA --> QA4[Copy Tightener<br/>Gemma3 4B]
     
-    QA1 --> QAMerge[Quality Report Merge<br/>factualAccuracy: 0.95<br/>accessibilityScore: 88<br/>readabilityGrade: 10]
+    QA1 --> QAMerge[QA Merge]
     QA2 --> QAMerge
     QA3 --> QAMerge
     QA4 --> QAMerge
     
-    QAMerge --> Enhance[✨ Phase 6: ENHANCEMENT<br/>Parallel Execution<br/>⏱️ ~10s]
+    QAMerge --> Enhance[Phase 6: Enhancement<br/>10s]
     
-    Enhance --> E1[Media Finder<br/>Find images<br/>Generate alt text]
-    Enhance --> E2[Data Viz Planner<br/>Chart type selection<br/>Encoding optimization]
-    Enhance --> E3[Speaker Notes<br/>Timing estimates<br/>Transitions]
-    Enhance --> E4[Widget Planner<br/>Live data endpoints<br/>Refresh strategy]
+    Enhance --> E1[Media Finder]
+    Enhance --> E2[Data Viz Planner]
+    Enhance --> E3[Speaker Notes]
+    Enhance --> E4[Widget Planner]
     
-    E1 --> Assembly[Content Assembly<br/>Enhanced Deck]
+    E1 --> Assembly[Assembly]
     E2 --> Assembly
     E3 --> Assembly
     E4 --> Assembly
     
-    Assembly --> Export[📦 Phase 7: EXPORT<br/>Apply theme<br/>Render charts natively<br/>Embed images<br/>⏱️ ~2s]
+    Assembly --> Export[Phase 7: Export<br/>2s]
     
-    Export --> PDF[PDF Export<br/>PDFKit + Themes<br/>Smart wrapping]
-    Export --> PPTX[PPTX Export<br/>Native charts<br/>Editable]
-    Export --> JSON[JSON Export<br/>Raw data]
+    Export --> PDF[PDF]
+    Export --> PPTX[PPTX]
+    Export --> JSON[JSON]
     
-    PDF --> Output([📊 Final Output<br/>Presentation Ready<br/>Total: ~130s])
+    PDF --> Output[Final Output<br/>Total: 130s]
     PPTX --> Output
     JSON --> Output
-    
-    style Start fill:#e3f2fd
-    style Init fill:#fff3e0
-    style Research fill:#fff9c4
-    style Structure fill:#f3e5f5
-    style Generate fill:#ffe0b2
-    style QA fill:#ffccbc
-    style QAMerge fill:#ffccbc
-    style Enhance fill:#c8e6c9
-    style Assembly fill:#c8e6c9
-    style Export fill:#fce4ec
-    style Output fill:#e0f2f1
 ```
 
 **Timing Breakdown (Balanced Policy, 12 slides):**
