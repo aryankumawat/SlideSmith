@@ -54,14 +54,25 @@ export default function StudioNewPage() {
     }
   };
 
+  // Helper to strip markdown formatting for clean exports
+  const stripMarkdown = (text: string): string => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove **bold**
+      .replace(/\*(.*?)\*/g, '$1')       // Remove *italic*
+      .replace(/__(.*?)__/g, '$1')       // Remove __bold__
+      .replace(/_(.*?)_/g, '$1')         // Remove _italic_
+      .trim();
+  };
+
   const convertDeckForExport = (deck: Deck) => {
     // Convert new deck format to old format expected by export APIs
+    // Strip markdown formatting for clean text in exports
     return {
       id: `deck-${Date.now()}`,
-      title: deck.title,
+      title: stripMarkdown(deck.title),
       theme: deck.theme,
       meta: {
-        title: deck.title,
+        title: stripMarkdown(deck.title),
         theme: deck.theme,
         audience: 'general',
         tone: 'professional',
@@ -69,20 +80,20 @@ export default function StudioNewPage() {
       slides: deck.slides.map((slide, index) => {
         const blocks: any[] = [];
         
-        // Add title as Heading block
+        // Add title as Heading block (strip markdown)
         if (slide.title) {
           blocks.push({
             type: 'Heading',
-            text: slide.title,
+            text: stripMarkdown(slide.title),
             level: 1,
           });
         }
         
-        // Add bullets as Bullets block
+        // Add bullets as Bullets block (strip markdown from each bullet)
         if (slide.bullets && slide.bullets.length > 0) {
           blocks.push({
             type: 'Bullets',
-            items: slide.bullets,
+            items: slide.bullets.map(bullet => stripMarkdown(bullet)),
           });
         }
         
@@ -99,8 +110,8 @@ export default function StudioNewPage() {
           blocks.push({
             type: 'Image',
             url: slide.image.source || '',
-            alt: slide.image.alt,
-            caption: slide.image.prompt,
+            alt: stripMarkdown(slide.image.alt),
+            caption: stripMarkdown(slide.image.prompt),
           });
         }
         
@@ -119,12 +130,27 @@ export default function StudioNewPage() {
     if (!generatedDeck) return;
     
     if (format === 'json') {
-      // Download JSON directly
-      const blob = new Blob([JSON.stringify(generatedDeck, null, 2)], { type: 'application/json' });
+      // Download JSON with markdown stripped for clean text
+      const cleanedDeck = {
+        ...generatedDeck,
+        title: stripMarkdown(generatedDeck.title),
+        slides: generatedDeck.slides.map(slide => ({
+          ...slide,
+          title: stripMarkdown(slide.title),
+          bullets: slide.bullets?.map(bullet => stripMarkdown(bullet)) || [],
+          image: slide.image ? {
+            ...slide.image,
+            alt: stripMarkdown(slide.image.alt),
+            prompt: stripMarkdown(slide.image.prompt)
+          } : undefined
+        }))
+      };
+      
+      const blob = new Blob([JSON.stringify(cleanedDeck, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${generatedDeck.title || 'presentation'}.json`;
+      a.download = `${stripMarkdown(generatedDeck.title) || 'presentation'}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
