@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Deck, Slide, SlideBlock } from '@/lib/schema';
 import PptxGenJS from 'pptxgenjs';
+import { exportToAdvancedPPTX } from '@/lib/pptx-advanced-exporter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +14,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const pptxBuffer = await generatePPTX(deck);
+    // Try advanced exporter first (for new format with charts, images, wrapping)
+    let pptxBuffer: Buffer;
+    try {
+      pptxBuffer = await exportToAdvancedPPTX(deck);
+    } catch (advancedError) {
+      console.warn('Advanced export failed, falling back to legacy:', advancedError);
+      // Fallback to legacy exporter for old format
+      pptxBuffer = await generatePPTX(deck);
+    }
     
     return new NextResponse(pptxBuffer as any, {
       headers: {

@@ -90,16 +90,24 @@ async function generatePDF(deck: Deck): Promise<Buffer> {
           doc.fontSize(32).fillColor(theme.primary)
              .text(slide.title, 60, 60, { width: 672, align: 'left' });
           
-          if (slide.bullets && Array.isArray(slide.bullets)) {
-            let yPos = 140;
-            doc.fontSize(18).fillColor(theme.text);
-            
-            slide.bullets.slice(0, 5).forEach((bullet: string) => {
-              const truncated = bullet.length > 80 ? bullet.substring(0, 77) + '...' : bullet;
-              doc.text(`• ${truncated}`, 80, yPos, { width: 632, lineGap: 8 });
-              yPos += 60;
-            });
-          }
+            if (slide.bullets && Array.isArray(slide.bullets)) {
+                let yPos = 140;
+                doc.fontSize(18).fillColor(theme.text);
+                
+                // NO truncation - use proper text wrapping instead
+                const maxBullets = Math.min(slide.bullets.length, 8);
+                const bulletSpacing = (612 - 140 - 70) / maxBullets; // Dynamic spacing
+                
+                slide.bullets.slice(0, maxBullets).forEach((bullet: string, idx: number) => {
+                  // Use PDFKit's built-in text wrapping (no manual truncation!)
+                  doc.text(`• ${bullet}`, 80, yPos, { 
+                    width: 632,
+                    lineGap: 6,
+                    ellipsis: false, // Don't add "..." 
+                  });
+                  yPos += Math.min(bulletSpacing, 65); // Adaptive spacing
+                });
+              }
         }
         
         // Add footer
