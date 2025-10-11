@@ -5,6 +5,7 @@ import DeckGenerator from '@/components/DeckGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Download, Eye, Share } from 'lucide-react';
+import { ChartDisplay } from '@/components/ChartDisplay';
 
 interface Slide {
   layout: 'title' | 'title_bullets' | 'two_column' | 'quote' | 'chart' | 'image_full';
@@ -235,16 +236,55 @@ export default function StudioNewPage() {
                   const parts = text.split(/(\*\*.*?\*\*)/g);
                   return parts.map((part, i) => {
                     if (part.startsWith('**') && part.endsWith('**')) {
-                      return <strong key={i} className="text-blue-600">{part.slice(2, -2)}</strong>;
+                      return <strong key={i} className="text-blue-600 font-semibold">{part.slice(2, -2)}</strong>;
                     }
                     return <span key={i}>{part}</span>;
                   });
                 };
 
+                // Get theme-based styling
+                const getThemeClasses = () => {
+                  const theme = generatedDeck.theme;
+                  switch (theme) {
+                    case 'deep_space':
+                      return {
+                        card: 'bg-gradient-to-br from-slate-900 to-blue-900 border-blue-500',
+                        header: 'bg-gradient-to-r from-blue-600 to-purple-600',
+                        accent: 'text-cyan-400'
+                      };
+                    case 'ultra_violet':
+                      return {
+                        card: 'bg-gradient-to-br from-purple-900 to-pink-900 border-purple-500',
+                        header: 'bg-gradient-to-r from-purple-600 to-fuchsia-600',
+                        accent: 'text-fuchsia-400'
+                      };
+                    case 'minimal':
+                      return {
+                        card: 'bg-white border-gray-300',
+                        header: 'bg-gray-100',
+                        accent: 'text-gray-700'
+                      };
+                    case 'corporate':
+                      return {
+                        card: 'bg-gradient-to-br from-slate-50 to-blue-50 border-blue-300',
+                        header: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+                        accent: 'text-blue-600'
+                      };
+                    default:
+                      return {
+                        card: 'bg-white border-gray-200',
+                        header: 'bg-gradient-to-r from-blue-50 to-purple-50',
+                        accent: 'text-blue-600'
+                      };
+                  }
+                };
+
+                const themeClasses = getThemeClasses();
+
                 return (
-                  <Card key={index} className="h-auto min-h-64 overflow-hidden border-2 hover:border-blue-400 transition-colors">
-                    <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-purple-50">
-                      <CardTitle className="text-base font-semibold leading-tight">
+                  <Card key={index} className={`h-auto min-h-64 overflow-hidden border-2 hover:shadow-xl transition-all ${themeClasses.card}`}>
+                    <CardHeader className={`pb-3 ${themeClasses.header}`}>
+                      <CardTitle className={`text-base font-semibold leading-tight ${themeClasses.accent}`}>
                         {renderMarkdown(slide.title)}
                       </CardTitle>
                     </CardHeader>
@@ -277,12 +317,9 @@ export default function StudioNewPage() {
                           </div>
                         )}
                         
-                        {/* Chart indicator */}
+                        {/* Chart visualization */}
                         {slide.chart_spec && (
-                          <div className="mt-2 p-2 bg-blue-50 rounded text-xs border border-blue-200">
-                            <span className="text-base mr-1">📊</span>
-                            <strong className="text-blue-700">Chart:</strong> {slide.chart_spec.type}
-                          </div>
+                          <ChartDisplay chartSpec={slide.chart_spec} className="mt-3" />
                         )}
                         
                         {/* Speaker notes preview */}
