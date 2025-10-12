@@ -43,9 +43,12 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error generating PPTX:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error('[PPTX Export] Error generating PPTX:', errorMessage);
+    console.error('[PPTX Export] Stack trace:', errorStack);
     return NextResponse.json(
-      { error: 'Failed to generate PPTX' },
+      { error: `Failed to generate PPTX: ${errorMessage}` },
       { status: 500 }
     );
   }
