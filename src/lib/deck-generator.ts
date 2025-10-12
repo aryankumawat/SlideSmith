@@ -155,21 +155,21 @@ Return ONLY valid JSON with specific, engaging titles for the given topic.`;
           name: 'Opening',
           slides: [
             { title: `**${topic}**: What You Need to Know`, layout: 'title_bullets', section: 'Opening' },
-            { title: 'Current State & Trends 📊', layout: 'title_bullets', section: 'Opening' }
+            { title: 'Current State & Trends', layout: 'title_bullets', section: 'Opening' }
           ]
         },
         {
           name: 'Analysis',
           slides: [
-            { title: 'Key Challenges & Opportunities 💡', layout: 'title_bullets', section: 'Analysis' },
+            { title: 'Key Challenges & Opportunities', layout: 'title_bullets', section: 'Analysis' },
             { title: 'Data-Driven Insights', layout: 'chart', section: 'Analysis' },
-            { title: 'Best Practices & Solutions 🚀', layout: 'title_bullets', section: 'Analysis' }
+            { title: 'Best Practices & Solutions', layout: 'title_bullets', section: 'Analysis' }
           ]
         },
         {
           name: 'Conclusion',
           slides: [
-            { title: 'Impact & Results 🎯', layout: 'title_bullets', section: 'Conclusion' },
+            { title: 'Impact & Results', layout: 'title_bullets', section: 'Conclusion' },
             { title: 'Next Steps & Takeaways', layout: 'title_bullets', section: 'Conclusion' }
           ]
         }
@@ -193,31 +193,23 @@ export async function generateSlide(params: {
     source: string;
   };
 }> {
-  const prompt = `You are an expert presentation designer creating engaging, visual slides.
+  const prompt = `You are an expert presentation designer creating engaging, professional slides.
 
-CRITICAL RULES FOR ENGAGING CONTENT:
+CRITICAL RULES FOR PROFESSIONAL CONTENT:
 1. **Use Bold Text**: Wrap key terms in **double asterisks** for emphasis
    Example: "**AI-powered diagnostics** reduce errors by 40%"
 
-2. **Use Emojis**: Add relevant emojis to bullets for visual interest
-   - 📊 for data/statistics
-   - 💡 for ideas/insights  
-   - 🚀 for growth/innovation
-   - ⚡ for speed/efficiency
-   - 🎯 for goals/targets
-   - 💰 for money/savings
-   - 🔒 for security
-   - 🌍 for global/environment
-
-3. **Specific Data**: Include real numbers, percentages, dates
+2. **Specific Data**: Include real numbers, percentages, dates
    Bad: "AI is growing fast"
-   Good: "**85% of hospitals** adopted AI by 2024 📈"
+   Good: "**85% of hospitals** adopted AI by 2024"
 
-4. **Visual Descriptions**: Add image details for EVERY slide
+3. **Visual Descriptions**: Add image details for EVERY slide
    - Describe relevant diagrams, charts, icons, or photos
    - Make it topic-specific and professional
 
-5. **Rich Speaker Notes**: 60-100 words with storytelling, examples, transitions
+4. **Rich Speaker Notes**: 60-100 words with storytelling, examples, transitions
+
+5. **NO EMOJIS**: Do not use any emojis in titles or bullets. Keep it professional.
 
 SLIDE TO GENERATE:
 Title: ${params.slide_context.title}
@@ -227,8 +219,8 @@ Section: ${params.slide_context.section || 'Main Content'}
 DOCUMENT_FACTS: """${params.per_slide_extracted_text_or_empty}"""
 
 OUTPUT REQUIREMENTS:
-- title: Engaging, specific title (use **bold** for key words)
-- bullets: 3-5 bullets with emojis, bold text, and specific data
+- title: Engaging, specific title (use **bold** for key words, NO emojis)
+- bullets: 3-5 bullets with bold text and specific data (NO emojis)
 - notes: Rich speaker notes with transitions and examples (60-100 words)
 - image: Always include! Describe a relevant visual element
   {
@@ -243,8 +235,8 @@ Output JSON:
 {
   "title": "**Bold Title** with Emphasis",
   "bullets": [
-    "🚀 **Bold term**: specific detail with data",
-    "📊 Another point with **emphasis** and numbers"
+    "**Bold term**: specific detail with data",
+    "Another point with **emphasis** and numbers"
   ],
   "notes": "Detailed speaker notes...",
   "image": {
@@ -278,14 +270,14 @@ Return ONLY valid JSON.`;
     return parsed;
   } catch (error) {
     console.error('Slide generation failed:', error);
-    // Enhanced fallback with more engaging content
+    // Enhanced fallback with professional content
     const topic = params.slide_context.title || 'Key Concepts';
     return {
       title: `**${topic}**: Overview`,
       bullets: [
-        `🎯 **Core Concept**: ${topic} fundamentals`,
-        `📊 **Key Metrics**: Measurable outcomes`,
-        `💡 **Innovation**: Latest developments`
+        `**Core Concept**: ${topic} fundamentals`,
+        `**Key Metrics**: Measurable outcomes`,
+        `**Innovation**: Latest developments`
       ],
       notes: `This slide covers the essential aspects of ${topic}. Start by introducing the core concept, then discuss key metrics that demonstrate impact. Highlight recent innovations and developments in this area. Engage the audience with specific examples and encourage questions.`,
       chart_spec: null,
