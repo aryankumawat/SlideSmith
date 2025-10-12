@@ -291,59 +291,59 @@ slide.addText(wrapped, {
 
 ```
 src/
-├── app/
-│   ├── api/
-│   │   ├── multi-model-generate/   # Multi-agent orchestration endpoint
-│   │   ├── generate-deck/          # Simplified generation endpoint
-│   │   ├── generate/               # Legacy endpoint (backward compat)
-│   │   └── export/                 # Format conversion endpoints
-│   │       ├── pdf/
-│   │       └── pptx/
-│   ├── studio/                     # Legacy studio interface
-│   ├── studio-new/                 # Modern studio interface
-│   └── page.tsx                    # Landing page
-│
-├── components/
-│   ├── blocks/                     # Slide content primitives
-│   │   ├── HeadingBlock.tsx
-│   │   ├── BulletsBlock.tsx
-│   │   ├── ChartBlock.tsx
-│   │   ├── ImageBlock.tsx
-│   │   └── ...
-│   ├── live-widgets/               # Real-time data components
-│   │   ├── LiveChart.tsx
-│   │   ├── Ticker.tsx
-│   │   ├── Map.tsx
-│   │   └── ...
-│   ├── DeckCanvas.tsx              # Slide rendering engine
-│   └── ui/                         # Design system components (shadcn)
-│
-├── lib/
-│   ├── multi-model/                # Agent system core
-│   │   ├── agents/                 # Individual agent implementations
-│   │   │   ├── researcher.ts
-│   │   │   ├── structurer.ts
-│   │   │   ├── slidewriter.ts
-│   │   │   ├── copy-tightener.ts
-│   │   │   ├── fact-checker.ts
-│   │   │   ├── accessibility-linter.ts
-│   │   │   └── ...
-│   │   ├── base-agent.ts           # Abstract agent class
-│   │   ├── orchestrator.ts         # DAG execution coordinator
-│   │   ├── router.ts               # Model selection logic
-│   │   ├── schemas.ts              # Zod validation contracts
-│   │   └── ollama-config.ts        # Model configuration
-│   │
-│   ├── llm.ts                      # LLM provider abstraction
-│   ├── deck-generator.ts           # Simplified generation pipeline
-│   ├── pptx-advanced-exporter.ts   # Advanced PPTX engine
-│   ├── schema.ts                   # Core TypeScript types
-│   ├── theming.ts                  # Theme system
-│   ├── storage.ts                  # Client-side persistence
-│   └── utils.ts                    # Utility functions
-│
-└── prompts/
-    └── slide_prompts.ts            # Prompt template library
+  app/
+    api/
+      multi-model-generate/   # Multi-agent orchestration endpoint
+      generate-deck/          # Simplified generation endpoint
+      generate/               # Legacy endpoint (backward compat)
+      export/                 # Format conversion endpoints
+        pdf/
+        pptx/
+    studio/                   # Legacy studio interface
+    studio-new/               # Modern studio interface
+    page.tsx                  # Landing page
+
+  components/
+    blocks/                   # Slide content primitives
+      HeadingBlock.tsx
+      BulletsBlock.tsx
+      ChartBlock.tsx
+      ImageBlock.tsx
+      ...
+    live-widgets/             # Real-time data components
+      LiveChart.tsx
+      Ticker.tsx
+      Map.tsx
+      ...
+    DeckCanvas.tsx            # Slide rendering engine
+    ui/                       # Design system components (shadcn)
+
+  lib/
+    multi-model/              # Agent system core
+      agents/                 # Individual agent implementations
+        researcher.ts
+        structurer.ts
+        slidewriter.ts
+        copy-tightener.ts
+        fact-checker.ts
+        accessibility-linter.ts
+        ...
+      base-agent.ts           # Abstract agent class
+      orchestrator.ts         # DAG execution coordinator
+      router.ts               # Model selection logic
+      schemas.ts              # Zod validation contracts
+      ollama-config.ts        # Model configuration
+
+    llm.ts                    # LLM provider abstraction
+    deck-generator.ts         # Simplified generation pipeline
+    pptx-advanced-exporter.ts # Advanced PPTX engine
+    schema.ts                 # Core TypeScript types
+    theming.ts                # Theme system
+    storage.ts                # Client-side persistence
+    utils.ts                  # Utility functions
+
+  prompts/
+    slide_prompts.ts          # Prompt template library
 ```
 
 **Key Modules:**
