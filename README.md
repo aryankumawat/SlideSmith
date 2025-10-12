@@ -453,9 +453,7 @@ ollama serve
 npm run dev
 ```
 
-Access the application:
-- **Modern UI**: http://localhost:3000/studio-new
-- **Legacy UI**: http://localhost:3000/studio
+Access the application at: **http://localhost:3000/studio-new**
 
 ### Production Build
 
