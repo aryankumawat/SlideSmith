@@ -413,7 +413,7 @@ interface AgentResponse {
 - PDF Export: ~0.3-0.4s
 - **Total End-to-End: ~4-7 minutes** (depends on slide count and complexity)
 
-**Multi-Model Pipeline (12-slide deck, Mixed Models):**
+**Multi-Model Pipeline (13-slide deck, Mixed Models):**
 - Initialization: ~2s
 - Research Phase (Gemma3 4B): ~30-40s
 - Structure Phase (Gemma3 4B): ~15-25s
