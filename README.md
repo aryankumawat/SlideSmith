@@ -456,7 +456,6 @@ npm run dev
 Access the application:
 - **Modern UI**: http://localhost:3000/studio-new
 - **Legacy UI**: http://localhost:3000/studio
-- **API Docs**: http://localhost:3000/api
 
 ### Production Build
 
