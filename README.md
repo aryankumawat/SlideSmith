@@ -129,10 +129,10 @@ npm >= 9.0.0
 
 ### Local Development Setup
 
-   ```bash
+```bash
 # Clone repository
-   git clone <repository-url>
-   cd slidesmith
+git clone https://github.com/aryankumawat/SlideSmith.git
+cd SlideSmith
 
 # Install dependencies
 npm install
@@ -152,7 +152,7 @@ LLM_MODEL=phi4
 ```
 
 **Ollama Setup:**
-   ```bash
+```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
@@ -170,17 +170,17 @@ ollama pull gemma3:4b         # Fast generation (4B parameters)
 
 #### OpenAI (Cloud Deployment)
 
-   ```env
-   LLM_PROVIDER=openai
+```env
+LLM_PROVIDER=openai
 LLM_API_KEY=sk-...
 LLM_BASE_URL=https://api.openai.com/v1
-   LLM_MODEL=gpt-4
-   ```
+LLM_MODEL=gpt-4
+```
 
 ### Launch Application
 
-   ```bash
-   npm run dev
+```bash
+npm run dev
 # Access: http://localhost:3000
 ```
 
@@ -359,7 +359,7 @@ src/
 
 Agents communicate through a structured message passing system:
 
-   ```typescript
+```typescript
 interface AgentMessage {
   input: InputSchema;    // Zod-validated input
   context?: Record<string, unknown>;  // Shared context
@@ -447,7 +447,7 @@ LLM_MODEL=gpt-4
 
 ### Metrics Tracking
 
-   ```typescript
+```typescript
 interface QualityMetrics {
   factualAccuracy: number;      // 0-1 confidence score
   accessibilityScore: number;   // 0-100 compliance score
