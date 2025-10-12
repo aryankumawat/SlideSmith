@@ -324,12 +324,10 @@ src/
   │   ├── api/
   │   │   ├── multi-model-generate/    # Multi-agent orchestration endpoint
   │   │   ├── generate-deck/           # Simplified generation endpoint
-  │   │   ├── generate/                # Legacy endpoint (backward compat)
   │   │   └── export/                  # Format conversion endpoints
   │   │       ├── pdf/
   │   │       └── pptx/
-  │   ├── studio/                      # Legacy studio interface
-  │   ├── studio-new/                  # Modern studio interface
+  │   ├── studio-new/                  # Studio interface
   │   └── page.tsx                     # Landing page
   │
   ├── components/
