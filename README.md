@@ -570,28 +570,6 @@ To add a new agent:
 
 ---
 
-## Roadmap
-
-### Q1 2025
-- [ ] GraphQL API for agent orchestration
-- [ ] WebSocket streaming for real-time generation updates
-- [ ] Custom agent plugin system
-- [ ] Advanced caching with Redis integration
-
-### Q2 2025
-- [ ] Multi-user collaboration (operational transform)
-- [ ] Advanced analytics dashboard
-- [ ] Custom model fine-tuning pipeline
-- [ ] Batch processing for multiple presentations
-
-### Q3 2025
-- [ ] Multi-language support (i18n)
-- [ ] Advanced chart generation (D3.js integration)
-- [ ] Video presentation export (MP4)
-- [ ] Voice-over generation integration
-
----
-
 ## License
 
 MIT License - See [LICENSE](LICENSE) for details
