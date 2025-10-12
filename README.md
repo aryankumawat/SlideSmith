@@ -26,22 +26,51 @@ SlideSmith implements a **13-agent collaborative pipeline** using LLM orchestrat
 
 The system orchestrates 13 specialized agents in a directed acyclic graph (DAG) workflow:
 
-| **Agent** | **Function** | **Execution Context** | **Model Policy** |
-|-----------|--------------|----------------------|------------------|
-| **Researcher** | Fact extraction, source validation, evidence synthesis | Research Phase | High-Quality |
-| **Structurer** | Narrative arc planning, section decomposition, flow optimization | Structure Phase | Balanced |
-| **Slidewriter** | Content composition, block generation, citation mapping | Generation Phase | Balanced |
-| **Copy Tightener** | Lexical consistency, tone normalization, terminology unification | QA Phase | Fast |
-| **Fact Checker** | Claim verification, citation validation, confidence scoring | QA Phase | Fast |
-| **Data→Viz Planner** | Chart type selection, encoding optimization, visual clarity analysis | Enhancement Phase | Fast |
-| **Media Finder** | Asset retrieval, alt-text generation, image sourcing | Enhancement Phase | Fast |
-| **Speaker Notes Generator** | Presenter guidance, timing estimation, transition scripting | Enhancement Phase | Fast |
-| **Accessibility Linter** | WCAG compliance, contrast analysis, readability validation | QA Phase | Fast |
-| **Live Widget Planner** | Real-time data integration, endpoint validation, refresh strategy | Enhancement Phase | Fast |
-| **Executive Summary** | Key point distillation, executive email generation | Finalization Phase | Fast |
-| **Audience Adapter** | Content retargeting, complexity adjustment, tone recalibration | On-Demand | Balanced |
-| **Readability Analyzer** | Linguistic complexity scoring, audience-appropriateness validation | QA Phase | Fast |
-| **PPTX Export Agent** | Native chart rendering, smart text wrapping, theme application | Export Phase | N/A |
+| **Agent** | **Function** | **Execution Context** | **Model (Balanced Policy)** |
+|-----------|--------------|----------------------|----------------------------|
+| **Researcher** | Fact extraction, source validation, evidence synthesis | Research Phase | Phi-4 14B |
+| **Structurer** | Narrative arc planning, section decomposition, flow optimization | Structure Phase | Gemma3 4B |
+| **Slidewriter** | Content composition, block generation, citation mapping | Generation Phase | Gemma3 4B |
+| **Copy Tightener** | Lexical consistency, tone normalization, terminology unification | QA Phase | Gemma3 4B |
+| **Fact Checker** | Claim verification, citation validation, confidence scoring | QA Phase | Gemma3 4B |
+| **Data→Viz Planner** | Chart type selection, encoding optimization, visual clarity analysis | Enhancement Phase | Gemma3 4B |
+| **Media Finder** | Asset retrieval, alt-text generation, image sourcing | Enhancement Phase | Gemma3 4B |
+| **Speaker Notes Generator** | Presenter guidance, timing estimation, transition scripting | Enhancement Phase | Gemma3 4B |
+| **Accessibility Linter** | WCAG compliance, contrast analysis, readability validation | QA Phase | Gemma3 4B |
+| **Live Widget Planner** | Real-time data integration, endpoint validation, refresh strategy | Enhancement Phase | Gemma3 4B |
+| **Executive Summary** | Key point distillation, executive email generation | Finalization Phase | Gemma3 4B |
+| **Audience Adapter** | Content retargeting, complexity adjustment, tone recalibration | On-Demand | Gemma3 4B |
+| **Readability Analyzer** | Linguistic complexity scoring, audience-appropriateness validation | QA Phase | Gemma3 4B |
+| **PPTX Export Agent** | Native chart rendering, smart text wrapping, theme application | Export Phase | Rule-based (no LLM) |
+
+#### Model Routing Policies
+
+The system supports three routing strategies that determine which LLM model is assigned to each agent:
+
+**1. Quality Policy** → Prioritizes output quality
+- **All agents** use **Phi-4 14B** (larger, more capable model)
+- **Best for:** Production presentations, critical content, maximum accuracy
+- **Trade-off:** Slower execution (~5-7 minutes per deck), higher memory usage
+
+**2. Speed Policy** → Prioritizes fast execution
+- **All agents** use **Gemma3 4B** (smaller, faster model)
+- **Best for:** Rapid prototyping, draft iterations, time-sensitive work
+- **Trade-off:** Lower quality output, less nuanced reasoning
+
+**3. Balanced Policy** (Default) → Optimizes for speed/quality trade-off
+- **Critical agents** (Researcher) use **Phi-4 14B** for accuracy
+- **Routine agents** (Slidewriter, Copy Tightener, etc.) use **Gemma3 4B** for speed
+- **Best for:** Most use cases, production-ready output with reasonable performance
+- **Result:** ~3-5 minutes per deck with high-quality results
+
+You can switch policies via the API:
+```typescript
+POST /api/multi-model-generate
+{
+  "topic": "AI in Healthcare",
+  "policy": "quality" | "speed" | "balanced"  // Default: "balanced"
+}
+```
 
 ### Architecture Overview
 
