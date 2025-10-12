@@ -58,8 +58,19 @@ interface ThemeColors {
  */
 export async function exportToAdvancedPPTX(deck: Deck): Promise<Buffer> {
   console.log('[Advanced PPTX] Starting export for deck:', deck.title);
+  console.log('[Advanced PPTX] Deck keys:', Object.keys(deck));
   console.log('[Advanced PPTX] Slide count:', deck.slides?.length || 0);
-  console.log('[Advanced PPTX] First slide sample:', JSON.stringify(deck.slides?.[0], null, 2));
+  
+  // Validate deck structure
+  if (!deck.slides || !Array.isArray(deck.slides)) {
+    throw new Error(`Invalid deck structure: slides is ${deck.slides === null ? 'null' : typeof deck.slides}`);
+  }
+  
+  if (deck.slides.length === 0) {
+    throw new Error('Cannot export deck with no slides');
+  }
+  
+  console.log('[Advanced PPTX] First slide sample:', JSON.stringify(deck.slides[0], null, 2));
   
   const pptx = new PptxGenJS();
   
@@ -84,7 +95,12 @@ export async function exportToAdvancedPPTX(deck: Deck): Promise<Buffer> {
       hasChart: !!slide.chart_spec,
       hasImage: !!slide.image,
     });
-    await addAdvancedSlide(pptx, slide, themeColors);
+    try {
+      await addAdvancedSlide(pptx, slide, themeColors);
+    } catch (slideError) {
+      console.error(`[Advanced PPTX] Error processing slide ${i + 1}:`, slideError);
+      throw new Error(`Failed to process slide ${i + 1}: ${slideError instanceof Error ? slideError.message : 'Unknown error'}`);
+    }
   }
   
   console.log('[Advanced PPTX] Export complete, generating buffer...');
