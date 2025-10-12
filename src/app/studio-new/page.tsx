@@ -161,14 +161,17 @@ export default function StudioNewPage() {
     
     try {
       const endpoint = format === 'pptx' ? '/api/export/pptx' : '/api/export/pdf';
-      const convertedDeck = convertDeckForExport(generatedDeck);
+      
+      // PPTX uses the new format directly (advanced exporter expects it)
+      // PDF uses the old blocks format (legacy exporter expects it)
+      const deckToExport = format === 'pptx' ? generatedDeck : convertDeckForExport(generatedDeck);
       
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ deck: convertedDeck }),
+        body: JSON.stringify({ deck: deckToExport }),
       });
 
       if (!response.ok) {
