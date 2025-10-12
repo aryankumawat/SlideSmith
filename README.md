@@ -289,61 +289,61 @@ slide.addText(wrapped, {
 
 ### Module Organization
 
-```
+```text
 src/
-  app/
-    api/
-      multi-model-generate/   # Multi-agent orchestration endpoint
-      generate-deck/          # Simplified generation endpoint
-      generate/               # Legacy endpoint (backward compat)
-      export/                 # Format conversion endpoints
-        pdf/
-        pptx/
-    studio/                   # Legacy studio interface
-    studio-new/               # Modern studio interface
-    page.tsx                  # Landing page
-
-  components/
-    blocks/                   # Slide content primitives
-      HeadingBlock.tsx
-      BulletsBlock.tsx
-      ChartBlock.tsx
-      ImageBlock.tsx
-      ...
-    live-widgets/             # Real-time data components
-      LiveChart.tsx
-      Ticker.tsx
-      Map.tsx
-      ...
-    DeckCanvas.tsx            # Slide rendering engine
-    ui/                       # Design system components (shadcn)
-
-  lib/
-    multi-model/              # Agent system core
-      agents/                 # Individual agent implementations
-        researcher.ts
-        structurer.ts
-        slidewriter.ts
-        copy-tightener.ts
-        fact-checker.ts
-        accessibility-linter.ts
-        ...
-      base-agent.ts           # Abstract agent class
-      orchestrator.ts         # DAG execution coordinator
-      router.ts               # Model selection logic
-      schemas.ts              # Zod validation contracts
-      ollama-config.ts        # Model configuration
-
-    llm.ts                    # LLM provider abstraction
-    deck-generator.ts         # Simplified generation pipeline
-    pptx-advanced-exporter.ts # Advanced PPTX engine
-    schema.ts                 # Core TypeScript types
-    theming.ts                # Theme system
-    storage.ts                # Client-side persistence
-    utils.ts                  # Utility functions
-
-  prompts/
-    slide_prompts.ts          # Prompt template library
+  ├── app/
+  │   ├── api/
+  │   │   ├── multi-model-generate/    # Multi-agent orchestration endpoint
+  │   │   ├── generate-deck/           # Simplified generation endpoint
+  │   │   ├── generate/                # Legacy endpoint (backward compat)
+  │   │   └── export/                  # Format conversion endpoints
+  │   │       ├── pdf/
+  │   │       └── pptx/
+  │   ├── studio/                      # Legacy studio interface
+  │   ├── studio-new/                  # Modern studio interface
+  │   └── page.tsx                     # Landing page
+  │
+  ├── components/
+  │   ├── blocks/                      # Slide content primitives
+  │   │   ├── HeadingBlock.tsx
+  │   │   ├── BulletsBlock.tsx
+  │   │   ├── ChartBlock.tsx
+  │   │   ├── ImageBlock.tsx
+  │   │   └── ...
+  │   ├── live-widgets/                # Real-time data components
+  │   │   ├── LiveChart.tsx
+  │   │   ├── Ticker.tsx
+  │   │   ├── Map.tsx
+  │   │   └── ...
+  │   ├── DeckCanvas.tsx               # Slide rendering engine
+  │   └── ui/                          # Design system components (shadcn)
+  │
+  ├── lib/
+  │   ├── multi-model/                 # Agent system core
+  │   │   ├── agents/                  # Individual agent implementations
+  │   │   │   ├── researcher.ts
+  │   │   │   ├── structurer.ts
+  │   │   │   ├── slidewriter.ts
+  │   │   │   ├── copy-tightener.ts
+  │   │   │   ├── fact-checker.ts
+  │   │   │   ├── accessibility-linter.ts
+  │   │   │   └── ...
+  │   │   ├── base-agent.ts            # Abstract agent class
+  │   │   ├── orchestrator.ts          # DAG execution coordinator
+  │   │   ├── router.ts                # Model selection logic
+  │   │   ├── schemas.ts               # Zod validation contracts
+  │   │   └── ollama-config.ts         # Model configuration
+  │   │
+  │   ├── llm.ts                       # LLM provider abstraction
+  │   ├── deck-generator.ts            # Simplified generation pipeline
+  │   ├── pptx-advanced-exporter.ts    # Advanced PPTX engine
+  │   ├── schema.ts                    # Core TypeScript types
+  │   ├── theming.ts                   # Theme system
+  │   ├── storage.ts                   # Client-side persistence
+  │   └── utils.ts                     # Utility functions
+  │
+  └── prompts/
+      └── slide_prompts.ts             # Prompt template library
 ```
 
 **Key Modules:**
@@ -374,15 +374,40 @@ interface AgentResponse {
 
 ### Performance Benchmarks
 
-**Timing (12-slide deck, Balanced Policy):**
-- Phase 1: Initialization (~1s)
-- Phase 2: Research - Phi-4 14B (~30s)
-- Phase 3: Structure - Gemma3 4B (~12s)
-- Phase 4: Generation - Gemma3 4B (~60s)
-- Phase 5: QA Pipeline - 4 parallel agents (~15s)
-- Phase 6: Enhancement - Media + Notes (~10s)
-- Phase 7: Export - PDF/PPTX/JSON (~2s)
-- **Total: ~130s (2 min 10 sec)**
+**Simplified Pipeline (6-slide deck, Gemma3 4B on M1 Pro):**
+- Initialization: ~1s
+- Outline Generation: ~18-26s
+- Slide Generation (6 slides): ~90-150s (15-25s per slide)
+- Visual Element Generation: ~18-20s per slide (parallel)
+- Chart Spec Generation: ~5-8s per chart
+- PPTX Export: ~0.3-0.8s
+- PDF Export: ~0.3-0.4s
+- **Total End-to-End: ~4-7 minutes** (depends on slide count and complexity)
+
+**Multi-Model Pipeline (12-slide deck, Mixed Models):**
+- Initialization: ~2s
+- Research Phase (Gemma3 4B): ~30-40s
+- Structure Phase (Gemma3 4B): ~15-25s
+- Slidewriter Phase (Gemma3 4B, parallel): ~120-180s
+- QA Pipeline (4 agents, parallel): ~20-30s
+  - Copy Tightener: ~8-12s
+  - Fact Checker: ~10-15s
+  - Accessibility Linter: ~5-8s
+  - Readability Analyzer: ~5-8s
+- Enhancement Phase: ~15-25s
+- Export Phase: ~1-2s
+- **Total: ~3-5 minutes**
+
+**Hardware Used:**
+- Apple M1 Pro (16GB RAM, 16-core GPU)
+- Models running via Ollama
+- GPU acceleration enabled
+- All 35 layers offloaded to GPU
+
+**Token Usage (per deck):**
+- Input Tokens: ~2,000-5,000 (prompts + context)
+- Output Tokens: ~8,000-15,000 (generated content)
+- Total: ~10,000-20,000 tokens per presentation
 
 
 ---
