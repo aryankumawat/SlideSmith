@@ -569,11 +569,6 @@ To add a new agent:
 5. Update pipeline DAG if dependencies exist
 
 ---
-
-## License
-
-MIT License - See [LICENSE](LICENSE) for details
-
 ## Support & Documentation
 
 - **Setup Guide**: [SETUP.md](./SETUP.md)
