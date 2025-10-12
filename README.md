@@ -151,25 +151,25 @@ graph TB
 
 ### Prerequisites
 
-```bash
+   ```bash
 node >= 18.0.0
 npm >= 9.0.0
-```
+   ```
 
 ### Local Development Setup
 
-```bash
+   ```bash
 # Clone repository
 git clone https://github.com/aryankumawat/SlideSmith.git
 cd SlideSmith
 
 # Install dependencies
-npm install
+   npm install
 
 # Configure environment
-cp .env.example .env.local
-```
-
+   cp .env.example .env.local
+   ```
+   
 ### Environment Configuration
 
 #### Ollama (Recommended - Local/Edge Deployment)
@@ -199,17 +199,17 @@ ollama pull gemma3:4b         # Fast generation (4B parameters)
 
 #### OpenAI (Cloud Deployment)
 
-```env
-LLM_PROVIDER=openai
+   ```env
+   LLM_PROVIDER=openai
 LLM_API_KEY=sk-...
 LLM_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4
-```
+   LLM_MODEL=gpt-4
+   ```
 
 ### Launch Application
 
-```bash
-npm run dev
+   ```bash
+   npm run dev
 # Access: http://localhost:3000
 ```
 
@@ -388,7 +388,7 @@ src/
 
 Agents communicate through a structured message passing system:
 
-```typescript
+   ```typescript
 interface AgentMessage {
   input: InputSchema;    // Zod-validated input
   context?: Record<string, unknown>;  // Shared context
@@ -501,7 +501,7 @@ LLM_MODEL=gpt-4
 
 ### Metrics Tracking
 
-```typescript
+   ```typescript
 interface QualityMetrics {
   factualAccuracy: number;      // 0-1 confidence score
   accessibilityScore: number;   // 0-100 compliance score
@@ -577,7 +577,3 @@ To add a new agent:
 - **Discussions**: GitHub Discussions
 
 ---
-
-**Version**: 2.0.0  
-**Last Updated**: 2025-10-12  
-**License**: MIT
