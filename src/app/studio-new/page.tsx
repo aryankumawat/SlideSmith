@@ -175,7 +175,10 @@ export default function StudioNewPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to export ${format.toUpperCase()}`);
+        // Get error details from response
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error(`Export ${format} failed:`, response.status, errorData);
+        throw new Error(`Failed to export ${format.toUpperCase()}: ${errorData.error || response.statusText}`);
       }
 
       // Get the blob and download it
