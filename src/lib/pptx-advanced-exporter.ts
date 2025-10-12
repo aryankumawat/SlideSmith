@@ -414,13 +414,34 @@ function renderTitleOnlySlide(
 }
 
 /**
+ * Strip markdown formatting from text
+ */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')   // Remove **bold**
+    .replace(/\*(.*?)\*/g, '$1')       // Remove *italic*
+    .replace(/__(.*?)__/g, '$1')       // Remove __bold__
+    .replace(/_(.*?)_/g, '$1')         // Remove _italic_
+    .replace(/~~(.*?)~~/g, '$1')       // Remove ~~strikethrough~~
+    .replace(/`(.*?)`/g, '$1')         // Remove `code`
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove [links](url)
+    .replace(/^#+\s+/gm, '')           // Remove # headings
+    .replace(/^\s*[-*+]\s+/gm, '')     // Remove list markers
+    .replace(/^\s*\d+\.\s+/gm, '')     // Remove numbered list markers
+    .trim();
+}
+
+/**
  * Smart text wrapping (NO truncation)
  * Breaks long text at word boundaries
  */
 function wrapText(text: string, maxCharsPerLine: number): string {
-  if (text.length <= maxCharsPerLine) return text;
+  // Strip markdown first
+  const cleanText = stripMarkdown(text);
   
-  const words = text.split(' ');
+  if (cleanText.length <= maxCharsPerLine) return cleanText;
+  
+  const words = cleanText.split(' ');
   const lines: string[] = [];
   let currentLine = '';
   

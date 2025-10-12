@@ -14,14 +14,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('[PPTX Export] Received deck:', {
+      title: deck.title,
+      theme: deck.theme,
+      slideCount: deck.slides?.length || 0,
+      firstSlideKeys: deck.slides?.[0] ? Object.keys(deck.slides[0]) : [],
+      hasBlocks: !!deck.slides?.[0]?.blocks,
+      hasBullets: !!deck.slides?.[0]?.bullets,
+    });
+
     // Try advanced exporter first (for new format with charts, images, wrapping)
     let pptxBuffer: Buffer;
     try {
+      console.log('[PPTX Export] Attempting advanced export...');
       pptxBuffer = await exportToAdvancedPPTX(deck);
+      console.log('[PPTX Export] Advanced export successful!');
     } catch (advancedError) {
-      console.warn('Advanced export failed, falling back to legacy:', advancedError);
+      console.warn('[PPTX Export] Advanced export failed, falling back to legacy:', advancedError);
       // Fallback to legacy exporter for old format
       pptxBuffer = await generatePPTX(deck);
+      console.log('[PPTX Export] Legacy export completed');
     }
     
     return new NextResponse(pptxBuffer as any, {
