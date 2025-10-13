@@ -160,8 +160,8 @@ npm >= 9.0.0
 
    ```bash
 # Clone repository
-git clone https://github.com/aryankumawat/SlideSmith.git
-cd SlideSmith
+git clone https://github.com/aryankumawat/SlideSmith-Multi-Agent-AI-Slide-Maker-.git
+cd SlideSmith-Multi-Agent-AI-Slide-Maker-
 
 # Install dependencies
    npm install
