@@ -1,4 +1,4 @@
-# SlideSmith
+# SlideSmith - Multi-Agent AI Slide Maker
 
 **Enterprise-Grade AI Presentation Generation Platform**
 

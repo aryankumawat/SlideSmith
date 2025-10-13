@@ -1,4 +1,4 @@
-# SlideSmith Setup Guide
+# SlideSmith - Multi-Agent AI Slide Maker Setup Guide
 
 ## Quick Start
 
